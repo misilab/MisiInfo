@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		D87049DA2FE1D98300A92561 /* libmediainfo.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = D87049D92FE1D98300A92561 /* libmediainfo.0.dylib */; };
 		D87049DB2FE1D98300A92561 /* libmediainfo.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = D87049D92FE1D98300A92561 /* libmediainfo.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		D87049F02FE2017F00A92561 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = D87049EF2FE2017F00A92561 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,9 +31,22 @@
 		D87049D92FE1D98300A92561 /* libmediainfo.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmediainfo.0.dylib; path = Vendor/MediaInfo/libmediainfo.0.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D87049F42FE2047F00A92561 /* Exceptions for "MediaScope" folder in "MediaScope" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D870498C2FE18E2700A92561 /* MediaScope */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		D870498F2FE18E2700A92561 /* MediaScope */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D87049F42FE2047F00A92561 /* Exceptions for "MediaScope" folder in "MediaScope" target */,
+			);
 			path = MediaScope;
 			sourceTree = "<group>";
 		};
@@ -44,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D87049DA2FE1D98300A92561 /* libmediainfo.0.dylib in Frameworks */,
+				D87049F02FE2017F00A92561 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +111,7 @@
 			);
 			name = MediaScope;
 			packageProductDependencies = (
+				D87049EF2FE2017F00A92561 /* Sparkle */,
 			);
 			productName = MediaScope;
 			productReference = D870498D2FE18E2700A92561 /* MisiInfo.app */;
@@ -127,6 +143,9 @@
 			);
 			mainGroup = D87049842FE18E2700A92561;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D87049EE2FE2017F00A92561 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D870498E2FE18E2700A92561 /* Products */;
 			projectDirPath = "";
@@ -287,7 +306,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = SM6L2XLUBA;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -304,9 +323,12 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MediaScope/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MisiInfo;
 				INFOPLIST_KEY_CFBundleName = MisiInfo;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/misilab/MisiInfo/main/docs/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "bxP11zE5Pla4VRO1J3UhVM3TRD4WUFdkKNDPWFWjU/I=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -317,7 +339,7 @@
 					"$(PROJECT_DIR)/Vendor/MediaInfo",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = fr.misilab.MediaScope;
 				PRODUCT_NAME = MisiInfo;
 				REGISTER_APP_GROUPS = YES;
@@ -337,7 +359,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = SM6L2XLUBA;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -354,9 +376,12 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MediaScope/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MisiInfo;
 				INFOPLIST_KEY_CFBundleName = MisiInfo;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/misilab/MisiInfo/main/docs/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "bxP11zE5Pla4VRO1J3UhVM3TRD4WUFdkKNDPWFWjU/I=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -367,7 +392,7 @@
 					"$(PROJECT_DIR)/Vendor/MediaInfo",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = fr.misilab.MediaScope;
 				PRODUCT_NAME = MisiInfo;
 				REGISTER_APP_GROUPS = YES;
@@ -402,6 +427,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D87049EE2FE2017F00A92561 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D87049EF2FE2017F00A92561 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D87049EE2FE2017F00A92561 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D87049852FE18E2700A92561 /* Project object */;
 }

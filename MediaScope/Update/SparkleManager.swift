@@ -6,42 +6,52 @@ import Combine
 import Sparkle
 
 /// Wrapper SwiftUI autour de `SPUStandardUpdaterController` (Sparkle 2.x).
-/// - Affiche les alertes Sparkle natives (download, prompt, install, relaunch automatique)
-/// - Vérifie automatiquement à chaque ouverture de l'app via le scheduler Sparkle
-/// - Signature Ed25519 vérifiée avant install
 @MainActor
-final class SparkleManager: ObservableObject {
+final class SparkleManager: NSObject, ObservableObject, SPUUpdaterDelegate {
     let controller: SPUStandardUpdaterController
 
-    init() {
-        // delegate: nil → comportement par défaut Sparkle
-        // userDriverDelegate: nil → UI standard avec alertes/progress
+    /// URL de l'appcast (fournie programmatiquement via le delegate, pas via Info.plist).
+    static let feedURL = "https://raw.githubusercontent.com/misilab/MisiInfo/main/docs/appcast.xml"
+
+    /// Clé publique Ed25519 (utilisée par Sparkle pour vérifier les signatures).
+    /// Doit aussi être présente dans Info.plist sous `SUPublicEDKey` pour que Sparkle l'utilise.
+    /// Voir le Run Script build phase dans INSTALL_SPARKLE.md.
+    static let publicEDKey = "bxP11zE5Pla4VRO1J3UhVM3TRD4WUFdkKNDPWFWjU/I="
+
+    override init() {
+        // L'instance temporaire pour avoir une ref vers self avant l'init du controller
+        let dummyDelegate: SPUUpdaterDelegate? = nil
         self.controller = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
+            startingUpdater: false,
+            updaterDelegate: dummyDelegate,
             userDriverDelegate: nil
         )
-        // Force la vérification à chaque lancement (en plus du planning automatique)
+        super.init()
+        // On wire le delegate après super.init pour avoir self valide
+        self.controller.updater.setValue(self, forKey: "delegate")
+        self.controller.startUpdater()
         self.controller.updater.automaticallyChecksForUpdates = true
-        self.controller.updater.updateCheckInterval = 3600 * 24  // 24h max entre checks auto
+        self.controller.updater.updateCheckInterval = 3600 * 24
     }
 
-    /// Vérification manuelle déclenchée par le menu / la toolbar.
     func checkForUpdates() {
         controller.checkForUpdates(nil)
     }
 
-    /// `true` si la dernière vérification est en cours.
     var canCheck: Bool {
         controller.updater.canCheckForUpdates
+    }
+
+    // MARK: - SPUUpdaterDelegate
+
+    /// Fournit l'URL de l'appcast à Sparkle (alternative à `SUFeedURL` dans Info.plist).
+    func feedURLString(for updater: SPUUpdater) -> String? {
+        SparkleManager.feedURL
     }
 }
 
 #else
 
-/// Stub utilisé tant que le package `Sparkle` n'est pas encore ajouté à la cible.
-/// Permet à l'app de compiler et de tourner sans la fonctionnalité auto-update.
-/// Voir `INSTALL_SPARKLE.md` pour activer.
 @MainActor
 final class SparkleManager: ObservableObject {
     init() {}
