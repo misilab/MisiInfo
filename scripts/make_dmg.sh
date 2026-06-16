@@ -135,3 +135,9 @@ fi
 
 echo ""
 echo "🚀 Prêt : $DMG_OUT"
+echo ""
+echo "Étapes suivantes pour publier :"
+echo "  1. ~/bin/gh release create v${VERSION_OVERRIDE:-X.Y.Z} \"$DMG_OUT\" docs/MisiInfo-Manual.pdf \\"
+echo "         --repo misilab/MisiInfo --title \"MisiInfo ${VERSION_OVERRIDE:-X.Y.Z}\" --notes \"...\""
+echo "  2. ./scripts/generate_appcast.sh   # signe les DMG + génère docs/appcast.xml"
+echo "  3. git add docs/appcast.xml && git commit -m \"Appcast v${VERSION_OVERRIDE:-X.Y.Z}\" && git push"

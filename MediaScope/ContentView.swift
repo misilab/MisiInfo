@@ -38,6 +38,7 @@ struct ContentView: View {
     @State private var library = MediaLibrary()
     @State private var showImporter = false
     @Bindable var updateChecker: UpdateChecker
+    @EnvironmentObject var sparkle: SparkleManager
     @AppStorage("appLanguage") private var languageRaw: String = AppLanguage.system.rawValue
 
     private var language: AppLanguage {
@@ -79,12 +80,12 @@ struct ContentView: View {
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    Task { await updateChecker.check(silent: false) }
+                    sparkle.checkForUpdates()
                 } label: {
                     Label("Vérifier les mises à jour", systemImage: "arrow.triangle.2.circlepath")
                 }
                 .help("Vérifier les mises à jour")
-                .disabled(updateCheckerIsChecking)
+                .disabled(!sparkle.canCheck)
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
