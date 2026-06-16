@@ -85,6 +85,8 @@ nonisolated struct VideoTrack: Identifiable, Hashable, Sendable {
     let frameRateMode: String?
     let codecLongName: String?
     let trackDuration: Double?
+    /// Vignette PNG du premier frame (max 320px côté long).
+    let posterFrame: Data?
 
     var resolutionLabel: String { "\(width) × \(height)" }
     var displayResolutionLabel: String { "\(displayWidth) × \(displayHeight)" }
@@ -123,6 +125,12 @@ nonisolated struct AudioTrack: Identifiable, Hashable, Sendable {
     let totalSamples: Int64?
     let codecIDLong: String?
     let trackDuration: Double?
+    /// Crêtes normalisées (0..1) pour visualisation waveform. ~600 valeurs typiques.
+    let waveformPeaks: [Float]?
+    /// Loudness intégré en LUFS (approximation K-weighted BS.1770). nil si non mesuré.
+    let integratedLUFS: Double?
+    /// Crête vraie en dBTP (true peak approximé via samples).
+    let truePeakDBTP: Double?
 
     var sampleRateLabel: String {
         guard sampleRate > 0 else { return "—" }

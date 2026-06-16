@@ -54,9 +54,9 @@ nonisolated enum MediaAnalyzer {
         for track in allTracks {
             switch track.mediaType {
             case .video:
-                if let v = try? await analyzeVideo(track: track) { videoTracks.append(v) }
+                if let v = try? await analyzeVideo(track: track, asset: asset) { videoTracks.append(v) }
             case .audio:
-                if let a = try? await analyzeAudio(track: track) { audioTracks.append(a) }
+                if let a = try? await analyzeAudio(track: track, asset: asset) { audioTracks.append(a) }
             case .subtitle, .closedCaption, .text:
                 if let s = try? await analyzeSubtitle(track: track) { subtitleTracks.append(s) }
             case .timecode where timecode == nil:
@@ -230,7 +230,7 @@ nonisolated enum MediaAnalyzer {
         return perComp
     }
 
-    private static func analyzeVideo(track: AVAssetTrack) async throws -> VideoTrack? {
+    private static func analyzeVideo(track: AVAssetTrack, asset: AVURLAsset) async throws -> VideoTrack? {
         let formatDescs = try await track.load(.formatDescriptions)
         guard let formatDesc = formatDescs.first else { return nil }
 
@@ -321,6 +321,9 @@ nonisolated enum MediaAnalyzer {
         }
         let trackDurationSec = CMTimeGetSeconds(tr.duration).isFinite ? CMTimeGetSeconds(tr.duration) : nil
 
+        // Vignette du premier frame
+        let poster = PreviewExtractor.extractPosterFrame(asset: asset)
+
         return VideoTrack(
             trackID: track.trackID,
             codecFourCC: fourCC,
@@ -355,7 +358,8 @@ nonisolated enum MediaAnalyzer {
             bitsPerPixelFrame: bitsPerPixelFrame,
             frameRateMode: frameRateMode,
             codecLongName: codecLongName,
-            trackDuration: trackDurationSec
+            trackDuration: trackDurationSec,
+            posterFrame: poster
         )
     }
 
@@ -446,7 +450,7 @@ nonisolated enum MediaAnalyzer {
 
     // MARK: Audio
 
-    private static func analyzeAudio(track: AVAssetTrack) async throws -> AudioTrack? {
+    private static func analyzeAudio(track: AVAssetTrack, asset: AVURLAsset) async throws -> AudioTrack? {
         let formatDescs = try await track.load(.formatDescriptions)
         guard let formatDesc = formatDescs.first else { return nil }
 
@@ -503,6 +507,9 @@ nonisolated enum MediaAnalyzer {
         }
         let codecIDLong = CodecNames.codecIDLong(forAudioFourCC: fourCC, audioProfile: audioProfile)
 
+        // Waveform + LUFS (lourd, peut prendre 0.5–2s sur un long fichier)
+        let measurement = PreviewExtractor.measureAudio(asset: asset, track: track)
+
         return AudioTrack(
             trackID: track.trackID,
             codecFourCC: fourCC,
@@ -521,7 +528,10 @@ nonisolated enum MediaAnalyzer {
             samplesPerFrame: samplesPerFrame,
             totalSamples: totalSamples,
             codecIDLong: codecIDLong,
-            trackDuration: trackDurationSec
+            trackDuration: trackDurationSec,
+            waveformPeaks: measurement?.peaks,
+            integratedLUFS: measurement?.integratedLUFS,
+            truePeakDBTP: measurement?.truePeakDBTP
         )
     }
 

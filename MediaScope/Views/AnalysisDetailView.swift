@@ -146,8 +146,13 @@ struct AnalysisReportView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 16) {
-                BrandMark(size: 64)
-                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                // Vignette du premier frame si dispo, sinon BrandMark
+                if let posterData = analysis.videoTracks.first?.posterFrame {
+                    PosterFrameView(data: posterData, maxWidth: 200)
+                } else {
+                    BrandMark(size: 64)
+                        .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(analysis.general.fileName)
                         .font(.system(size: 26, weight: .bold, design: .rounded))

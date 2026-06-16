@@ -7,13 +7,43 @@ struct InfoRow: View {
     var essential: Bool = false
     /// Si vrai, `value` est traité comme une clé de traduction (look-up via `\.locale` au render).
     var localizedValue: Bool = false
+    /// Tooltip pédagogique affiché au survol (clé de traduction).
+    var tooltip: LocalizedStringKey? = nil
+
+    /// Init avec extraction automatique du tooltip via le `label` raw string.
+    init(label: String, value: String?, monospaced: Bool = false, essential: Bool = false, localizedValue: Bool = false) {
+        self.label = LocalizedStringKey(label)
+        self.value = value
+        self.monospaced = monospaced
+        self.essential = essential
+        self.localizedValue = localizedValue
+        self.tooltip = Tooltips.explanation(for: label)
+    }
+
+    /// Init direct (utilisé pour les cas particuliers).
+    init(label: LocalizedStringKey, value: String?, monospaced: Bool = false, essential: Bool = false, localizedValue: Bool = false, tooltip: LocalizedStringKey? = nil) {
+        self.label = label
+        self.value = value
+        self.monospaced = monospaced
+        self.essential = essential
+        self.localizedValue = localizedValue
+        self.tooltip = tooltip
+    }
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 16) {
-            Text(label)
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 200, idealWidth: 220, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 4) {
+                Text(label)
+                    .foregroundStyle(.secondary)
+                if tooltip != nil {
+                    Image(systemName: "info.circle")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(minWidth: 200, idealWidth: 220, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .help(tooltip ?? "")
             Group {
                 if let value, !value.isEmpty {
                     if localizedValue {

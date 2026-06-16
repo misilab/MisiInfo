@@ -172,6 +172,26 @@ struct AudioSection: View {
                 InfoRow(label: "Endianness", value: track.endianness, localizedValue: true)
             }
             InfoRow(label: "Profil audio", value: track.audioProfile)
+
+            // Waveform si dispo
+            if let peaks = track.waveformPeaks, !peaks.isEmpty {
+                Spacer().frame(height: 8)
+                WaveformView(peaks: peaks, tint: .mediaAudio, height: 48)
+                    .padding(.vertical, 2)
+            }
+
+            // Mesures de loudness (LUFS + True Peak)
+            if let lufs = track.integratedLUFS {
+                InfoRow(label: "Loudness intégrée (LUFS)",
+                        value: String(format: "%.1f LUFS", lufs),
+                        monospaced: true)
+            }
+            if let tp = track.truePeakDBTP {
+                InfoRow(label: "Crête vraie (dBTP)",
+                        value: String(format: "%.1f dBTP", tp),
+                        monospaced: true)
+            }
+
             if mode == .expert {
                 InfoRow(label: "Échantillons par frame", value: track.samplesPerFrame.map { "\($0) SPF" }, monospaced: true)
                 InfoRow(label: "Nombre total d'échantillons", value: track.totalSamples.map { "\($0)" }, monospaced: true)
