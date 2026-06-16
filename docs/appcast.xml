@@ -7,6 +7,38 @@
         <language>fr</language>
         <link>https://github.com/misilab/MisiInfo</link>
         <item>
+            <title>MisiInfo 1.3.1</title>
+            <link>https://github.com/misilab/MisiInfo/releases/tag/v1.3.1</link>
+            <sparkle:version>1.3.1</sparkle:version>
+            <sparkle:shortVersionString>1.3.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <pubDate>Tue, 16 Jun 2026 22:27:01 +0000</pubDate>
+            <description><![CDATA[
+# MisiInfo 1.3.1 — Fix Sparkle 🔧
+
+Petite mise à jour qui répare l'auto-update Sparkle introduit dans 1.3.0.
+
+## 🐛 Correctif
+
+- **SUPublicEDKey** désormais correctement embarquée dans `Info.plist` (sans, Sparkle ne démarrait pas)
+- **SUFeedURL** déplacée vers une configuration programmatique via le delegate `SPUUpdaterDelegate.feedURLString(for:)` (plus robuste que la clé Info.plist)
+
+Si vous étiez sur 1.3.0 avec l'erreur *« You must specify the URL of the appcast »*, cette version corrige le problème. Les mises à jour suivantes (1.3.2+) passeront sans avertissement Gatekeeper en 1 clic via Sparkle.
+
+## 📦 Téléchargements
+
+- **MisiInfo.dmg** — Developer ID signé + notarisé Apple
+- **MisiInfo-Manual.pdf** — manuel trilingue
+
+Pré-requis : macOS 14 Sonoma ou supérieur.
+            ]]></description>
+            <enclosure
+                url="https://github.com/misilab/MisiInfo/releases/download/v1.3.1/MisiInfo.dmg"
+                sparkle:edSignature="IreYJhLBlbusR2ixDxmvDm8h1pSClrzESSxZuqp3SgS2Uk4kjggtkbFhVMib+4kNEw/DcN3WqLSpzDo4hUpVBw=="
+                length="10555798"
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>MisiInfo 1.3.0</title>
             <link>https://github.com/misilab/MisiInfo/releases/tag/v1.3.0</link>
             <sparkle:version>1.3.0</sparkle:version>
