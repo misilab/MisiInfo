@@ -4,7 +4,7 @@ import CoreMedia
 import CoreAudioTypes
 import OSLog
 
-nonisolated let mediaLog = Logger(subsystem: "fr.misilab.MediaScope", category: "analyzer")
+nonisolated let mediaLog = Logger(subsystem: "fr.misilab.MisiInfo", category: "analyzer")
 
 nonisolated enum MediaAnalysisError: Error, LocalizedError {
     case unreadable(String)

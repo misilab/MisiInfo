@@ -163,7 +163,18 @@ final class UpdateChecker {
         }
     }
 
+    /// Compare deux versions semver composant par composant après padding avec des zéros.
+    /// `1.0.0` == `1.0` == `1`, et `1.0.1` > `1.0` correctement.
     private func isNewer(_ candidate: String, than base: String) -> Bool {
-        candidate.compare(base, options: .numeric) == .orderedDescending
+        let a = candidate.split(separator: ".").compactMap { Int($0) }
+        let b = base.split(separator: ".").compactMap { Int($0) }
+        let len = max(a.count, b.count)
+        let pa = a + Array(repeating: 0, count: len - a.count)
+        let pb = b + Array(repeating: 0, count: len - b.count)
+        for i in 0..<len {
+            if pa[i] > pb[i] { return true }
+            if pa[i] < pb[i] { return false }
+        }
+        return false
     }
 }

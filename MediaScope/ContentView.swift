@@ -36,8 +36,8 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
 struct ContentView: View {
     @State private var library = MediaLibrary()
-    @State private var updateChecker = UpdateChecker()
     @State private var showImporter = false
+    @Bindable var updateChecker: UpdateChecker
     @AppStorage("appLanguage") private var languageRaw: String = AppLanguage.system.rawValue
 
     private var language: AppLanguage {
@@ -146,5 +146,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(updateChecker: UpdateChecker())
 }

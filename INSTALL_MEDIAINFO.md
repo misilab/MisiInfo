@@ -1,6 +1,6 @@
-# Activer MediaInfoLib dans MediaScope
+# Activer MediaInfoLib dans MisiInfo
 
-MediaScope fonctionne **sans MediaInfoLib** — toutes les données extraites via AVFoundation restent affichées. L'intégration de la bibliothèque ajoute des champs supplémentaires que macOS ne fournit pas en natif :
+MisiInfo fonctionne **sans MediaInfoLib** — toutes les données extraites via AVFoundation restent affichées. L'intégration de la bibliothèque ajoute des champs supplémentaires que macOS ne fournit pas en natif :
 
 - Mode du débit précis (**CBR / VBR / VBR with avg**)
 - **Format profile** détaillé (H.264 High@L4.0, HEVC Main 10@L5.1, AAC LC, etc.)
@@ -32,7 +32,7 @@ Résultat : `Vendor/MediaInfo/libmediainfo.0.dylib` (universel arm64 + x86_64, l
 
 ## Étape 2 — Ajouter les `.dylib` au projet Xcode
 
-1. Ouvre **MediaScope.xcodeproj** dans Xcode.
+1. Ouvre **MediaScope.xcodeproj** dans Xcode (le projet Xcode garde son nom de fichier d'origine).
 2. Sélectionne la cible **MediaScope** (à gauche, l'app bleue).
 3. Va dans l'onglet **General** → section **Frameworks, Libraries, and Embedded Content**.
 4. Clique sur le **+** → **Add Other… → Add Files…**

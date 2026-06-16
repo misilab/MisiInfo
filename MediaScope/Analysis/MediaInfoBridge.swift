@@ -2,7 +2,7 @@ import Foundation
 import Darwin
 
 /// Données extraites via MediaInfoLib. Optionnel : si la lib n'est pas présente,
-/// MediaScope continue de fonctionner avec les seules données AVFoundation.
+/// MisiInfo continue de fonctionner avec les seules données AVFoundation.
 nonisolated struct MediaInfoData: Sendable, Hashable {
     let format: String?
     let formatProfile: String?
@@ -32,7 +32,7 @@ nonisolated struct MediaInfoData: Sendable, Hashable {
 
 /// Pont vers `libmediainfo.0.dylib` chargé dynamiquement via `dlopen`.
 /// L'app reste fonctionnelle si la bibliothèque n'est pas installée — tous les appels
-/// retournent simplement `nil` et MediaScope se rabat sur ses données AVFoundation.
+/// retournent simplement `nil` et MisiInfo se rabat sur ses données AVFoundation.
 ///
 /// Pour activer : suivre les instructions de `INSTALL_MEDIAINFO.md` à la racine du projet.
 nonisolated enum MediaInfoBridge {

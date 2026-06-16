@@ -56,13 +56,13 @@ xcodebuild -exportArchive \
     -exportPath "$EXPORT_DIR" \
     2>&1 | grep -E "^(/|error:|warning:|\*\*|Exported)" | tail -10 || true
 
-APP_SRC=$(find "$EXPORT_DIR" -name "MediaScope.app" -type d -maxdepth 2 | head -1)
+APP_SRC=$(find "$EXPORT_DIR" -name "*.app" -type d -maxdepth 2 | head -1)
 if [[ -z "$APP_SRC" ]]; then
     echo "❌ Export échoué — vérifie que ton certificat Developer ID est valide :"
     echo "   security find-identity -p codesigning -v | grep 'Developer ID'"
     exit 1
 fi
-echo "📦 App exportée : $APP_SRC"
+echo "📦 App exportée : $APP_SRC  ($(basename "$APP_SRC"))"
 
 echo "🔐 Vérification de la signature…"
 codesign --verify --deep --strict --verbose=2 "$APP_SRC" 2>&1 | head -10
