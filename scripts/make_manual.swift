@@ -229,7 +229,7 @@ let frManual = Manual(h1: "Manuel utilisateur — Français", sections: [
         "Glissez MisiInfo dans le dossier Applications",
         "Lancez l'application depuis le Launchpad ou Spotlight"
     ]),
-    Section("Premier lancement", body: "À l'ouverture, MisiInfo affiche un écran d'accueil. Glissez un fichier audio ou vidéo dans la fenêtre, ou utilisez le bouton + dans la barre d'outils (raccourci ⌘O). Le fichier apparaît dans la liste à gauche, et son analyse complète à droite."),
+    Section("Premier lancement", body: "À l'ouverture, MisiInfo affiche un écran d'accueil. Glissez un fichier audio ou vidéo dans la fenêtre, ou utilisez le bouton + dans la barre d'outils (raccourci ⌘O). Le fichier apparaît dans la liste à gauche, et son analyse complète à droite. La sidebar dispose d'une barre de recherche pour filtrer rapidement la liste lorsque vous analysez plusieurs fichiers, et un footer affiche le nombre total de fichiers et la taille cumulée."),
     Section("Sections d'analyse", bullets: [
         "Résumé : nom du fichier, conteneur, taille, durée, débit global, encodeur, caméra",
         "Vidéo : codec, profil/level, résolution, fréquence d'images, débit, sous-échantillonnage, mode de compression",
@@ -258,7 +258,7 @@ let enManual = Manual(h1: "User Manual — English", sections: [
         "Drag MisiInfo into the Applications folder",
         "Launch the app from Launchpad or Spotlight"
     ]),
-    Section("First launch", body: "On first launch, MisiInfo shows a welcome screen. Drop an audio or video file into the window, or use the + button in the toolbar (shortcut ⌘O). The file appears in the left sidebar and its full analysis on the right."),
+    Section("First launch", body: "On first launch, MisiInfo shows a welcome screen. Drop an audio or video file into the window, or use the + button in the toolbar (shortcut ⌘O). The file appears in the left sidebar and its full analysis on the right. The sidebar includes a search bar to quickly filter the list when you are analyzing multiple files, and a footer shows the total file count and combined size."),
     Section("Analysis sections", bullets: [
         "Summary: file name, container, size, duration, overall bitrate, encoder, camera",
         "Video: codec, profile/level, resolution, frame rate, bitrate, chroma subsampling, compression mode",
@@ -287,7 +287,7 @@ let esManual = Manual(h1: "Manual de usuario — Español", sections: [
         "Arrastre MisiInfo a la carpeta Aplicaciones",
         "Inicie la aplicación desde el Launchpad o Spotlight"
     ]),
-    Section("Primer inicio", body: "Al abrirse, MisiInfo muestra una pantalla de bienvenida. Arrastre un archivo de audio o vídeo a la ventana, o use el botón + de la barra de herramientas (atajo ⌘O). El archivo aparece en la lista de la izquierda, y su análisis completo a la derecha."),
+    Section("Primer inicio", body: "Al abrirse, MisiInfo muestra una pantalla de bienvenida. Arrastre un archivo de audio o vídeo a la ventana, o use el botón + de la barra de herramientas (atajo ⌘O). El archivo aparece en la lista de la izquierda, y su análisis completo a la derecha. La barra lateral incluye un campo de búsqueda para filtrar rápidamente la lista al analizar varios archivos, y un pie de página muestra el número total de archivos y el tamaño combinado."),
     Section("Secciones de análisis", bullets: [
         "Resumen: nombre del archivo, contenedor, tamaño, duración, tasa global, codificador, cámara",
         "Vídeo: códec, perfil/nivel, resolución, frecuencia de imagen, tasa, submuestreo, modo de compresión",
