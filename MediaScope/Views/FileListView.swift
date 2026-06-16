@@ -3,37 +3,78 @@ import AppKit
 
 struct FileListView: View {
     @Bindable var library: MediaLibrary
+    @State private var searchText: String = ""
+
+    private var filteredItems: [MediaItem] {
+        guard !searchText.isEmpty else { return library.items }
+        return library.items.filter {
+            $0.displayName.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private var totalFileSize: Int64 {
+        library.items.compactMap { item in
+            if case .ready(let a) = item.state { return a.general.fileSize }
+            return nil
+        }.reduce(0, +)
+    }
 
     var body: some View {
         Group {
             if library.items.isEmpty {
                 emptyState
             } else {
-                List(selection: $library.selectionID) {
-                    Section {
-                        ForEach(library.items) { item in
-                            FileRow(item: item)
-                                .tag(item.id)
-                                .contextMenu {
-                                    Button("Révéler dans le Finder") {
-                                        NSWorkspace.shared.activateFileViewerSelecting([item.url])
-                                    }
-                                    Button("Réanalyser") { library.reanalyze(itemID: item.id) }
-                                    Divider()
-                                    Button("Retirer", role: .destructive) { library.remove(itemID: item.id) }
-                                }
-                        }
-                    } header: {
-                        Text("\(library.items.count) fichier(s)")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
+                VStack(spacing: 0) {
+                    list
+                    footer
                 }
-                .listStyle(.sidebar)
             }
         }
         .navigationTitle("MisiInfo")
-        .animation(.easeInOut(duration: 0.2), value: library.items.count)
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: library.items.count)
+        .searchable(text: $searchText, placement: .sidebar, prompt: "Filtrer…")
+    }
+
+    private var list: some View {
+        List(selection: $library.selectionID) {
+            ForEach(filteredItems) { item in
+                FileRow(item: item)
+                    .tag(item.id)
+                    .contextMenu {
+                        Button("Révéler dans le Finder") {
+                            NSWorkspace.shared.activateFileViewerSelecting([item.url])
+                        }
+                        Button("Réanalyser") { library.reanalyze(itemID: item.id) }
+                        Divider()
+                        Button("Retirer", role: .destructive) { library.remove(itemID: item.id) }
+                    }
+            }
+        }
+        .listStyle(.sidebar)
+    }
+
+    @ViewBuilder
+    private var footer: some View {
+        Divider().opacity(0.6)
+        HStack(spacing: 6) {
+            Image(systemName: "tray.full")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            Text("\(library.items.count) fichier(s)")
+                .foregroundStyle(.secondary)
+            if totalFileSize > 0 {
+                Text("•")
+                    .foregroundStyle(.tertiary)
+                Text(ByteCountFormatter.string(fromByteCount: totalFileSize, countStyle: .file))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            Spacer()
+        }
+        .font(.caption)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.regularMaterial)
     }
 
     private var emptyState: some View {

@@ -53,11 +53,13 @@ struct ContentView: View {
         NavigationSplitView {
             FileListView(library: library)
                 .frame(minWidth: 260)
-                .navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 360)
+                .navigationSplitViewColumnWidth(min: 260, ideal: 300, max: 380)
         } detail: {
             AnalysisDetailView(item: library.selectedItem, mode: library.viewMode)
                 .frame(minWidth: 560)
+                .background(.background.secondary)
         }
+        .navigationSplitViewStyle(.balanced)
         .environment(\.locale, language.locale ?? Locale.current)
         .navigationTitle("MisiInfo")
         .toolbar {

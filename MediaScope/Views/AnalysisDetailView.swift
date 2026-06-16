@@ -108,7 +108,7 @@ struct AnalysisReportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 22) {
                 header
                 summaryGrid
 
@@ -144,12 +144,13 @@ struct AnalysisReportView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 14) {
-                BrandMark(size: 56)
-                VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 16) {
+                BrandMark(size: 64)
+                    .shadow(color: .black.opacity(0.15), radius: 6, y: 3)
+                VStack(alignment: .leading, spacing: 6) {
                     Text(analysis.general.fileName)
-                        .font(.title.weight(.semibold))
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
                         .lineLimit(2)
                         .truncationMode(.middle)
                         .textSelection(.enabled)
@@ -159,7 +160,7 @@ struct AnalysisReportView: View {
                 actionButtons
             }
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, 6)
     }
 
     private var metaPills: some View {
@@ -244,9 +245,20 @@ private struct Pill: View {
     var body: some View {
         Text(text)
             .font(.caption.weight(.semibold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Capsule().fill(color.opacity(0.18)))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                Capsule().fill(
+                    LinearGradient(
+                        colors: [color.opacity(0.22), color.opacity(0.12)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            )
+            .overlay(
+                Capsule().strokeBorder(color.opacity(0.30), lineWidth: 0.6)
+            )
             .foregroundStyle(color)
     }
 }
@@ -259,29 +271,46 @@ private struct StatTile: View {
     var monospaced: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 7) {
                 Image(systemName: systemImage)
-                    .font(.caption.weight(.semibold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(tint)
+                    .frame(width: 18, height: 18)
+                    .background(
+                        Circle().fill(tint.opacity(0.15))
+                    )
                 Text(title)
-                    .font(.caption.weight(.medium))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.5)
             }
             Text(value)
-                .font(monospaced ? .title3.monospacedDigit().weight(.semibold) : .title3.weight(.semibold))
+                .font(monospaced
+                    ? .title2.monospacedDigit().weight(.bold)
+                    : .title2.weight(.bold))
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.65)
+                .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(tint.opacity(0.10))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.regularMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(tint.opacity(0.25), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [tint.opacity(0.30), tint.opacity(0.08)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.7
+                )
         )
+        .shadow(color: tint.opacity(0.08), radius: 4, x: 0, y: 1)
     }
 }
