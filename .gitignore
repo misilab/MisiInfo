@@ -1,0 +1,25 @@
+## Build / DerivedData
+build/
+DerivedData/
+*.app
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+**/xcuserdata/
+
+## DMG outputs
+*.dmg
+
+## Vendor / téléchargé
+Vendor/
+MediaScope/Frameworks/libmediainfo.0.dylib
+
+## OS
+.DS_Store
+*.swp
+
+## Xcode
+*.xcuserstate
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+xcuserdata/
