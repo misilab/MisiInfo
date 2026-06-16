@@ -92,8 +92,6 @@ struct FileListView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-            CreditLine()
-                .padding(.bottom, 8)
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
