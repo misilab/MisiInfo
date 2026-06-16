@@ -109,11 +109,8 @@ final class UpdateChecker {
     /// Évite plusieurs checks simultanés (l'utilisateur qui spamme le bouton).
     private var inFlight = false
 
-    /// Check silencieux au lancement, max une fois par 24h.
+    /// Check silencieux au lancement à chaque ouverture de l'app.
     func checkAutomaticallyAtLaunch() {
-        let last = UserDefaults.standard.double(forKey: lastCheckKey)
-        let now = Date().timeIntervalSince1970
-        guard now - last >= 24 * 3600 else { return }
         Task { await check(silent: true) }
     }
 
