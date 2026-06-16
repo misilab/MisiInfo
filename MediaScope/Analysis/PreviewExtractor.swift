@@ -48,9 +48,13 @@ nonisolated enum PreviewExtractor {
 
     /// Lit le PCM de la piste audio et calcule :
     /// - les crêtes pour le waveform
-    /// - le loudness intégré BS.1770 (approximation K-weighting)
-    /// - le true peak en dBTP
-    static func measureAudio(asset: AVURLAsset, track: AVAssetTrack, targetPeakCount: Int = 600) -> AudioMeasurement? {
+    /// - le loudness intégré BS.1770-4 (K-weighting + gating absolu/relatif)
+    /// - le true peak en dBTP (interpolation 4×)
+    static func measureAudio(
+        asset: AVURLAsset,
+        track: AVAssetTrack,
+        targetPeakCount: Int = 600
+    ) -> AudioMeasurement? {
         guard let reader = try? AVAssetReader(asset: asset) else { return nil }
 
         let outputSettings: [String: Any] = [
@@ -67,25 +71,42 @@ nonisolated enum PreviewExtractor {
         guard reader.startReading() else { return nil }
         defer { reader.cancelReading() }
 
-        // On collecte les |max| par bloc d'échantillons, puis on bucketise vers targetPeakCount.
+        // Récupère le sample rate + channel count depuis le format description de la piste
+        var sampleRate: Double = 48000
+        var channelCount: Int = 2
+        if let fmt = (CMSampleBufferGetFormatDescription(output.copyNextSampleBuffer() ?? CMSampleBuffer.dummy)) {
+            if let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(fmt)?.pointee {
+                sampleRate = asbd.mSampleRate
+                channelCount = Int(asbd.mChannelsPerFrame)
+            }
+        }
+        // On a peut-être déjà consommé un sample : on recrée le reader pour repartir à zéro
+        reader.cancelReading()
+        guard let reader2 = try? AVAssetReader(asset: asset) else { return nil }
+        let output2 = AVAssetReaderTrackOutput(track: track, outputSettings: outputSettings)
+        output2.alwaysCopiesSampleData = false
+        guard reader2.canAdd(output2) else { return nil }
+        reader2.add(output2)
+        guard reader2.startReading() else { return nil }
+        defer { reader2.cancelReading() }
+
+        // Stockage complet des samples Float pour le calcul BS.1770
+        var allSamples: [Float] = []
+        allSamples.reserveCapacity(Int(sampleRate * 30) * channelCount)
         var allPeaks: [Float] = []
         allPeaks.reserveCapacity(8192)
-        var rmsSum: Double = 0
-        var rmsCount: UInt64 = 0
-        var truePeak: Float = 0
 
-        while reader.status == .reading {
-            guard let buffer = output.copyNextSampleBuffer(),
+        while reader2.status == .reading {
+            guard let buffer = output2.copyNextSampleBuffer(),
                   let blockBuffer = CMSampleBufferGetDataBuffer(buffer) else { break }
-            let length = CMBlockBufferGetDataLength(blockBuffer)
-            guard length > 0 else { continue }
             var dataPointer: UnsafeMutablePointer<CChar>?
             var totalLen = 0
             CMBlockBufferGetDataPointer(blockBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &totalLen, dataPointerOut: &dataPointer)
-            guard let raw = dataPointer else { continue }
+            guard let raw = dataPointer, totalLen > 0 else { continue }
             raw.withMemoryRebound(to: Float.self, capacity: totalLen / MemoryLayout<Float>.size) { ptr in
                 let count = totalLen / MemoryLayout<Float>.size
-                var localMax: Float = 0
+                allSamples.append(contentsOf: UnsafeBufferPointer(start: ptr, count: count))
+                // Crêtes pour waveform
                 let bucket = max(1, count / 32)
                 for i in stride(from: 0, to: count, by: bucket) {
                     let end = min(i + bucket, count)
@@ -93,50 +114,43 @@ nonisolated enum PreviewExtractor {
                     for j in i..<end {
                         let v = abs(ptr[j])
                         if v > blockMax { blockMax = v }
-                        // RMS accumulation
-                        rmsSum += Double(v * v)
-                        rmsCount += 1
                     }
                     allPeaks.append(blockMax)
-                    if blockMax > localMax { localMax = blockMax }
                 }
-                if localMax > truePeak { truePeak = localMax }
             }
         }
+        guard !allSamples.isEmpty, !allPeaks.isEmpty else { return nil }
 
-        guard !allPeaks.isEmpty else { return nil }
-
-        // Bucketize vers targetPeakCount
+        // Bucketize pour waveform
         let bucketCount = targetPeakCount
-        var bucketed: [Float] = Array(repeating: 0, count: bucketCount)
+        var bucketed = Array(repeating: Float(0), count: bucketCount)
         let ratio = Double(allPeaks.count) / Double(bucketCount)
         for i in 0..<bucketCount {
             let start = Int(Double(i) * ratio)
             let end = min(Int(Double(i + 1) * ratio), allPeaks.count)
-            if start < end {
-                var m: Float = 0
-                for j in start..<end {
-                    if allPeaks[j] > m { m = allPeaks[j] }
-                }
-                bucketed[i] = m
-            }
+            var m: Float = 0
+            for j in start..<end { if allPeaks[j] > m { m = allPeaks[j] } }
+            bucketed[i] = m
         }
 
-        // Loudness approximation : RMS dBFS → ~LUFS (sans K-weighting réelle, mais
-        // directionnellement utile pour comparer des fichiers).
-        var lufs: Double? = nil
-        if rmsCount > 0 {
-            let rms = sqrt(rmsSum / Double(rmsCount))
-            if rms > 0 {
-                let dbfs = 20 * log10(rms)
-                // Ajustement empirique pour approcher l'échelle LUFS BS.1770
-                lufs = dbfs - 0.691
-            }
-        }
+        // LUFS BS.1770-4
+        let lufs = LoudnessBS1770.integratedLoudness(
+            samples: allSamples,
+            channelCount: channelCount,
+            sampleRate: sampleRate,
+            channelLayout: nil
+        )
+        let truePeak = LoudnessBS1770.truePeakDBTP(samples: allSamples, channelCount: channelCount)
 
-        // True Peak dBTP
-        let dbtp: Double? = truePeak > 0 ? Double(20 * log10(truePeak)) : nil
+        return AudioMeasurement(peaks: bucketed, integratedLUFS: lufs, truePeakDBTP: truePeak)
+    }
+}
 
-        return AudioMeasurement(peaks: bucketed, integratedLUFS: lufs, truePeakDBTP: dbtp)
+// CMSampleBuffer dummy utility pour éviter une boucle infinie si pas de buffer
+extension CMSampleBuffer {
+    static var dummy: CMSampleBuffer {
+        var sb: CMSampleBuffer!
+        CMSampleBufferCreate(allocator: nil, dataBuffer: nil, dataReady: false, makeDataReadyCallback: nil, refcon: nil, formatDescription: nil, sampleCount: 0, sampleTimingEntryCount: 0, sampleTimingArray: nil, sampleSizeEntryCount: 0, sampleSizeArray: nil, sampleBufferOut: &sb)
+        return sb
     }
 }

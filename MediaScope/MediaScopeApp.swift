@@ -7,8 +7,9 @@ struct MisiInfoApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(updateChecker: updateChecker)
-                .frame(minWidth: 980, minHeight: 640)
+                .frame(minWidth: 1100, minHeight: 720)
         }
+        .defaultSize(width: 1280, height: 800)
         .windowToolbarStyle(.unified)
         .commands {
             // Pas de New Document

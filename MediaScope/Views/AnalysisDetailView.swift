@@ -213,16 +213,32 @@ struct AnalysisReportView: View {
             }
             .help("Copier le rapport texte")
 
-            Button {
-                exportReport()
+            Menu {
+                Button("Exporter en texte (.txt)") { exportReport() }
+                Button("Exporter en PDF (.pdf)") { exportPDFReport() }
             } label: {
                 Label("Exporter", systemImage: "square.and.arrow.up")
             }
-            .help("Exporter le rapport en .txt")
+            .menuIndicator(.hidden)
+            .help("Exporter le rapport")
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
         .labelStyle(.iconOnly)
+    }
+
+    private func exportPDFReport() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.pdf]
+        panel.nameFieldStringValue = analysis.general.fileURL.deletingPathExtension().lastPathComponent + "-MisiInfo.pdf"
+        panel.canCreateDirectories = true
+        panel.title = "Exporter le rapport PDF"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if !PDFReportGenerator.generate(analysis, to: url) {
+            let alert = NSAlert()
+            alert.messageText = "Échec de génération du PDF"
+            alert.runModal()
+        }
     }
 
     private func exportReport() {

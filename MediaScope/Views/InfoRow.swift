@@ -41,7 +41,7 @@ struct InfoRow: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .frame(minWidth: 200, idealWidth: 220, alignment: .leading)
+            .frame(minWidth: 240, idealWidth: 260, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .help(tooltip ?? "")
             Group {
