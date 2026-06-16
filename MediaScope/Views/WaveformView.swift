@@ -9,11 +9,11 @@ struct WaveformView: View {
     var body: some View {
         GeometryReader { geo in
             Canvas { ctx, size in
-                guard !peaks.isEmpty else { return }
+                guard !peaks.isEmpty, size.width > 0, size.height > 0 else { return }
                 let w = size.width
                 let h = size.height
                 let mid = h / 2
-                let barW = max(1.0, w / CGFloat(peaks.count))
+                let barW = max(1.0, w / CGFloat(max(peaks.count, 1)))
                 let gap = barW > 2 ? barW * 0.25 : 0
                 for (i, p) in peaks.enumerated() {
                     let amp = max(2, CGFloat(p) * h)

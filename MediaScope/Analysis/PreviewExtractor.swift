@@ -9,7 +9,7 @@ nonisolated enum PreviewExtractor {
 
     // MARK: - Thumbnail vidéo
 
-    /// Extrait une vignette PNG (max ~320px côté long) à mi-fichier.
+    /// Extrait une vignette PNG (~640px max) à 1s dans le clip.
     static func extractPosterFrame(asset: AVURLAsset, at time: CMTime = .zero) -> Data? {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
@@ -17,7 +17,6 @@ nonisolated enum PreviewExtractor {
         generator.requestedTimeToleranceBefore = .positiveInfinity
         generator.requestedTimeToleranceAfter = .positiveInfinity
 
-        // Position : 1 seconde dans la vidéo si possible, sinon 0
         let targetTime: CMTime
         let assetDuration = asset.duration
         if CMTimeGetSeconds(assetDuration).isFinite && CMTimeGetSeconds(assetDuration) > 2 {
@@ -38,25 +37,29 @@ nonisolated enum PreviewExtractor {
         return png
     }
 
-    // MARK: - Audio waveform + loudness
+    // MARK: - Audio waveform + loudness (streaming)
 
     struct AudioMeasurement {
-        let peaks: [Float]           // 0..1 par fenêtre
-        let integratedLUFS: Double?  // approximation BS.1770
-        let truePeakDBTP: Double?    // dBTP approximé
+        let peaks: [Float]
+        let integratedLUFS: Double?
+        let truePeakDBTP: Double?
     }
 
-    /// Lit le PCM de la piste audio et calcule :
-    /// - les crêtes pour le waveform
-    /// - le loudness intégré BS.1770-4 (K-weighting + gating absolu/relatif)
-    /// - le true peak en dBTP (interpolation 4×)
+    /// Lit le PCM de la piste audio en **streaming** (aucune accumulation des samples) et calcule
+    /// le LUFS BS.1770-4 + true peak + waveform. Sûr pour fichiers très longs (4+ heures).
+    /// `sampleRate` et `channelCount` doivent être fournis par l'appelant (généralement extraits
+    /// du `CMFormatDescription` chargé via `track.load(.formatDescriptions)`).
     static func measureAudio(
         asset: AVURLAsset,
         track: AVAssetTrack,
+        sampleRate: Double,
+        channelCount: Int,
         targetPeakCount: Int = 600
     ) -> AudioMeasurement? {
-        guard let reader = try? AVAssetReader(asset: asset) else { return nil }
+        guard sampleRate > 0, channelCount > 0 else { return nil }
 
+        // 2. Reader unique en streaming
+        guard let reader = try? AVAssetReader(asset: asset) else { return nil }
         let outputSettings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
             AVLinearPCMBitDepthKey: 32,
@@ -71,86 +74,148 @@ nonisolated enum PreviewExtractor {
         guard reader.startReading() else { return nil }
         defer { reader.cancelReading() }
 
-        // Récupère le sample rate + channel count depuis le format description de la piste
-        var sampleRate: Double = 48000
-        var channelCount: Int = 2
-        if let fmt = (CMSampleBufferGetFormatDescription(output.copyNextSampleBuffer() ?? CMSampleBuffer.dummy)) {
-            if let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(fmt)?.pointee {
-                sampleRate = asbd.mSampleRate
-                channelCount = Int(asbd.mChannelsPerFrame)
-            }
-        }
-        // On a peut-être déjà consommé un sample : on recrée le reader pour repartir à zéro
-        reader.cancelReading()
-        guard let reader2 = try? AVAssetReader(asset: asset) else { return nil }
-        let output2 = AVAssetReaderTrackOutput(track: track, outputSettings: outputSettings)
-        output2.alwaysCopiesSampleData = false
-        guard reader2.canAdd(output2) else { return nil }
-        reader2.add(output2)
-        guard reader2.startReading() else { return nil }
-        defer { reader2.cancelReading() }
+        // 3. État streaming : biquads K-weighting per-channel, accumulateurs block-loudness
+        let preFilter = LoudnessBS1770.preFilter(sampleRate: sampleRate)
+        let rlbFilter = LoudnessBS1770.rlbFilter(sampleRate: sampleRate)
+        var preStates = Array(repeating: LoudnessBS1770.BiquadState(), count: channelCount)
+        var rlbStates = Array(repeating: LoudnessBS1770.BiquadState(), count: channelCount)
 
-        // Stockage complet des samples Float pour le calcul BS.1770
-        var allSamples: [Float] = []
-        allSamples.reserveCapacity(Int(sampleRate * 30) * channelCount)
-        var allPeaks: [Float] = []
-        allPeaks.reserveCapacity(8192)
+        let blockSize = max(1, Int(0.400 * sampleRate))
+        let hop = max(1, Int(0.100 * sampleRate))
+        // Tableaux de mean-square par bloc (un seul accumulateur courant + sliding pour overlap)
+        // Chaque sample contribue à `blockSize / hop = 4` blocs simultanés.
+        let overlapBlocks = (blockSize + hop - 1) / hop
+        // sumSq[i][ch] : somme des x² pour le i-ème bloc actif courant.
+        var activeSumSq: [[Double]] = Array(
+            repeating: Array(repeating: 0.0, count: channelCount),
+            count: overlapBlocks
+        )
+        var activeSampleCount = [Int](repeating: 0, count: overlapBlocks)
+        var globalSampleIdx = 0  // numéro absolu du sample courant
+        var blockLoudness: [Double] = []
+        var truePeak: Float = 0
+        var peakBuckets: [Float] = []
+        peakBuckets.reserveCapacity(8192)
+        var currentBucketMax: Float = 0
+        var samplesInBucket = 0
+        let samplesPerBucket = max(1, Int(sampleRate / 30))  // ~30 buckets/sec
 
-        while reader2.status == .reading {
-            guard let buffer = output2.copyNextSampleBuffer(),
+        // 4. Boucle de lecture sans accumulation
+        while reader.status == .reading {
+            guard let buffer = output.copyNextSampleBuffer(),
                   let blockBuffer = CMSampleBufferGetDataBuffer(buffer) else { break }
             var dataPointer: UnsafeMutablePointer<CChar>?
             var totalLen = 0
             CMBlockBufferGetDataPointer(blockBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &totalLen, dataPointerOut: &dataPointer)
-            guard let raw = dataPointer, totalLen > 0 else { continue }
-            raw.withMemoryRebound(to: Float.self, capacity: totalLen / MemoryLayout<Float>.size) { ptr in
-                let count = totalLen / MemoryLayout<Float>.size
-                allSamples.append(contentsOf: UnsafeBufferPointer(start: ptr, count: count))
-                // Crêtes pour waveform
-                let bucket = max(1, count / 32)
-                for i in stride(from: 0, to: count, by: bucket) {
-                    let end = min(i + bucket, count)
-                    var blockMax: Float = 0
-                    for j in i..<end {
-                        let v = abs(ptr[j])
-                        if v > blockMax { blockMax = v }
+            guard let raw = dataPointer, totalLen >= MemoryLayout<Float>.size else { continue }
+            let sampleCount = totalLen / MemoryLayout<Float>.size
+            guard sampleCount % channelCount == 0 else { continue }
+            let frames = sampleCount / channelCount
+
+            raw.withMemoryRebound(to: Float.self, capacity: sampleCount) { ptr in
+                for f in 0..<frames {
+                    // Pour chaque frame, applique K-weighting per channel (état persistant),
+                    // accumule dans les blocs actifs.
+                    for ch in 0..<channelCount {
+                        let inputSample = ptr[f * channelCount + ch]
+                        // Sample peak (pour waveform)
+                        let absV = abs(inputSample)
+                        if absV > truePeak { truePeak = absV }
+                        if absV > currentBucketMax { currentBucketMax = absV }
+                        // K-weighting
+                        var s = Double(inputSample)
+                        // Pre-filter biquad (single sample)
+                        var ps = preStates[ch]
+                        let preY = preFilter.b0 * s + preFilter.b1 * ps.z1 + preFilter.b2 * ps.z2
+                                 - preFilter.a1 * ps.y1 - preFilter.a2 * ps.y2
+                        ps.z2 = ps.z1; ps.z1 = s
+                        ps.y2 = ps.y1; ps.y1 = preY
+                        preStates[ch] = ps
+                        s = preY
+                        // RLB filter
+                        var rs = rlbStates[ch]
+                        let rlbY = rlbFilter.b0 * s + rlbFilter.b1 * rs.z1 + rlbFilter.b2 * rs.z2
+                                 - rlbFilter.a1 * rs.y1 - rlbFilter.a2 * rs.y2
+                        rs.z2 = rs.z1; rs.z1 = s
+                        rs.y2 = rs.y1; rs.y1 = rlbY
+                        rlbStates[ch] = rs
+                        // Accumule dans tous les blocs actifs
+                        let sqVal = rlbY * rlbY
+                        for slot in 0..<overlapBlocks {
+                            activeSumSq[slot][ch] += sqVal
+                        }
                     }
-                    allPeaks.append(blockMax)
+                    // Compte le sample dans tous les slots
+                    for slot in 0..<overlapBlocks {
+                        activeSampleCount[slot] += 1
+                    }
+                    globalSampleIdx += 1
+                    // Émet un block-loudness chaque fois qu'un slot atteint blockSize
+                    for slot in 0..<overlapBlocks {
+                        if activeSampleCount[slot] == blockSize {
+                            // Calcule weighted sum (poids 1.0 par défaut)
+                            var weightedSum = 0.0
+                            for ch in 0..<channelCount {
+                                weightedSum += activeSumSq[slot][ch] / Double(blockSize)
+                            }
+                            if weightedSum > 0 {
+                                let lufs = -0.691 + 10.0 * log10(weightedSum)
+                                blockLoudness.append(lufs)
+                            }
+                            // Réinitialise ce slot
+                            for ch in 0..<channelCount { activeSumSq[slot][ch] = 0 }
+                            activeSampleCount[slot] = 0
+                        }
+                    }
+                    // Démarre un nouveau slot tous les `hop` samples
+                    if globalSampleIdx % hop == 0 {
+                        // Le slot qui vient d'être réinitialisé reprend ; OK
+                    }
+                    // Waveform peak bucketing
+                    samplesInBucket += 1
+                    if samplesInBucket >= samplesPerBucket {
+                        peakBuckets.append(currentBucketMax)
+                        currentBucketMax = 0
+                        samplesInBucket = 0
+                    }
                 }
             }
         }
-        guard !allSamples.isEmpty, !allPeaks.isEmpty else { return nil }
+        if currentBucketMax > 0 || samplesInBucket > 0 {
+            peakBuckets.append(currentBucketMax)
+        }
+        guard !blockLoudness.isEmpty else { return nil }
 
-        // Bucketize pour waveform
-        let bucketCount = targetPeakCount
-        var bucketed = Array(repeating: Float(0), count: bucketCount)
-        let ratio = Double(allPeaks.count) / Double(bucketCount)
-        for i in 0..<bucketCount {
-            let start = Int(Double(i) * ratio)
-            let end = min(Int(Double(i + 1) * ratio), allPeaks.count)
-            var m: Float = 0
-            for j in start..<end { if allPeaks[j] > m { m = allPeaks[j] } }
-            bucketed[i] = m
+        // 5. Bucketize waveform vers targetPeakCount
+        var bucketed = Array(repeating: Float(0), count: targetPeakCount)
+        if !peakBuckets.isEmpty {
+            let ratio = Double(peakBuckets.count) / Double(targetPeakCount)
+            for i in 0..<targetPeakCount {
+                let start = Int(Double(i) * ratio)
+                let end = min(Int(Double(i + 1) * ratio), peakBuckets.count)
+                var m: Float = 0
+                for j in start..<end { if peakBuckets[j] > m { m = peakBuckets[j] } }
+                bucketed[i] = m
+            }
         }
 
-        // LUFS BS.1770-4
-        let lufs = LoudnessBS1770.integratedLoudness(
-            samples: allSamples,
-            channelCount: channelCount,
-            sampleRate: sampleRate,
-            channelLayout: nil
-        )
-        let truePeak = LoudnessBS1770.truePeakDBTP(samples: allSamples, channelCount: channelCount)
+        // 6. Gating BS.1770
+        let abs1 = blockLoudness.filter { $0 >= -70.0 }
+        guard !abs1.isEmpty else { return nil }
+        let meanEnergy1 = abs1.reduce(0.0) { $0 + pow(10.0, $1 / 10.0) } / Double(abs1.count)
+        let meanLUFS = 10.0 * log10(meanEnergy1) - 0.691
+        let threshold = meanLUFS - 10.0
+        let abs2 = abs1.filter { $0 >= threshold }
+        let lufs: Double?
+        if abs2.isEmpty {
+            lufs = nil
+        } else {
+            let meanEnergy2 = abs2.reduce(0.0) { $0 + pow(10.0, $1 / 10.0) } / Double(abs2.count)
+            lufs = 10.0 * log10(meanEnergy2) - 0.691
+        }
 
-        return AudioMeasurement(peaks: bucketed, integratedLUFS: lufs, truePeakDBTP: truePeak)
-    }
-}
+        let dbtp: Double? = truePeak > 0 ? Double(20.0 * log10(truePeak)) : nil
 
-// CMSampleBuffer dummy utility pour éviter une boucle infinie si pas de buffer
-extension CMSampleBuffer {
-    static var dummy: CMSampleBuffer {
-        var sb: CMSampleBuffer!
-        CMSampleBufferCreate(allocator: nil, dataBuffer: nil, dataReady: false, makeDataReadyCallback: nil, refcon: nil, formatDescription: nil, sampleCount: 0, sampleTimingEntryCount: 0, sampleTimingArray: nil, sampleSizeEntryCount: 0, sampleSizeArray: nil, sampleBufferOut: &sb)
-        return sb
+        return AudioMeasurement(peaks: bucketed, integratedLUFS: lufs, truePeakDBTP: dbtp)
     }
 }

@@ -503,6 +503,7 @@ nonisolated enum PDFReportGenerator {
         }
 
         func drawWaveform(peaks: [Float], height: CGFloat) {
+            guard !peaks.isEmpty else { return }
             ensure(height + 8)
             let drawY = pageSize.height - y - height
             let rect = CGRect(x: marginX, y: drawY, width: contentWidth, height: height)
@@ -511,7 +512,7 @@ nonisolated enum PDFReportGenerator {
             ctx.fill(rect)
             ctx.setFillColor(NSColor(srgbRed: 0.10, green: 0.50, blue: 0.85, alpha: 0.85).cgColor)
             let mid = drawY + height / 2
-            let barW = rect.width / CGFloat(peaks.count)
+            let barW = rect.width / CGFloat(max(peaks.count, 1))
             for (i, p) in peaks.enumerated() {
                 let amp = max(1, CGFloat(p) * height)
                 let x = marginX + CGFloat(i) * barW

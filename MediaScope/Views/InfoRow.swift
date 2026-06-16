@@ -7,27 +7,31 @@ struct InfoRow: View {
     var essential: Bool = false
     /// Si vrai, `value` est traité comme une clé de traduction (look-up via `\.locale` au render).
     var localizedValue: Bool = false
-    /// Tooltip pédagogique affiché au survol (clé de traduction).
+    /// Tooltip pédagogique affiché au survol.
     var tooltip: LocalizedStringKey? = nil
-
-    /// Init avec extraction automatique du tooltip via le `label` raw string.
-    init(label: String, value: String?, monospaced: Bool = false, essential: Bool = false, localizedValue: Bool = false) {
-        self.label = LocalizedStringKey(label)
-        self.value = value
-        self.monospaced = monospaced
-        self.essential = essential
-        self.localizedValue = localizedValue
-        self.tooltip = Tooltips.explanation(for: label)
+    /// Si fourni, utilisé pour auto-résoudre le tooltip via `Tooltips.explanation(for:)`.
+    /// Permet de garder la traduction d'un label LocalizedStringKey (qui préserve les
+    /// interpolations `%lld` / `%@`) tout en ayant un tooltip pédagogique sur les labels
+    /// statiques.
+    private static func resolveTooltip(_ tooltip: LocalizedStringKey?, _ raw: String?) -> LocalizedStringKey? {
+        if let t = tooltip { return t }
+        if let r = raw, let auto = Tooltips.explanation(for: r) { return auto }
+        return nil
     }
 
-    /// Init direct (utilisé pour les cas particuliers).
-    init(label: LocalizedStringKey, value: String?, monospaced: Bool = false, essential: Bool = false, localizedValue: Bool = false, tooltip: LocalizedStringKey? = nil) {
+    init(label: LocalizedStringKey,
+         value: String?,
+         monospaced: Bool = false,
+         essential: Bool = false,
+         localizedValue: Bool = false,
+         tooltip: LocalizedStringKey? = nil,
+         autoTooltipFor raw: String? = nil) {
         self.label = label
         self.value = value
         self.monospaced = monospaced
         self.essential = essential
         self.localizedValue = localizedValue
-        self.tooltip = tooltip
+        self.tooltip = Self.resolveTooltip(tooltip, raw)
     }
 
     var body: some View {

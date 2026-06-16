@@ -507,8 +507,13 @@ nonisolated enum MediaAnalyzer {
         }
         let codecIDLong = CodecNames.codecIDLong(forAudioFourCC: fourCC, audioProfile: audioProfile)
 
-        // Waveform + LUFS (lourd, peut prendre 0.5–2s sur un long fichier)
-        let measurement = PreviewExtractor.measureAudio(asset: asset, track: track)
+        // Waveform + LUFS BS.1770-4 (streaming, ~constant en RAM même pour fichiers très longs)
+        let measurement = PreviewExtractor.measureAudio(
+            asset: asset,
+            track: track,
+            sampleRate: sampleRate > 0 ? sampleRate : 48000,
+            channelCount: channels > 0 ? channels : 2
+        )
 
         return AudioTrack(
             trackID: track.trackID,
