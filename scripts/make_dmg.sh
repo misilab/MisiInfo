@@ -19,10 +19,14 @@ set -e
 
 NOTARIZE=false
 KEYCHAIN_PROFILE="MisiInfoNotarize"
-for arg in "$@"; do
-    case "$arg" in
-        --notarize) NOTARIZE=true ;;
-        --keychain-profile=*) KEYCHAIN_PROFILE="${arg#*=}" ;;
+VERSION_OVERRIDE=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --notarize) NOTARIZE=true; shift ;;
+        --keychain-profile=*) KEYCHAIN_PROFILE="${1#*=}"; shift ;;
+        --version) VERSION_OVERRIDE="$2"; shift 2 ;;
+        --version=*) VERSION_OVERRIDE="${1#*=}"; shift ;;
+        *) shift ;;
     esac
 done
 
@@ -36,12 +40,18 @@ DMG_OUT="$HOME/Desktop/${APP_NAME}.dmg"
 trap 'rm -rf "$(dirname "$ARCHIVE_PATH")" "$EXPORT_DIR" "$STAGING"' EXIT
 
 echo "🛠  Archive Release (signature Developer ID)…"
+EXTRA_BUILD_ARGS=()
+if [[ -n "$VERSION_OVERRIDE" ]]; then
+    echo "📌 Version override : $VERSION_OVERRIDE"
+    EXTRA_BUILD_ARGS+=("MARKETING_VERSION=$VERSION_OVERRIDE")
+fi
 xcodebuild archive \
     -project "$ROOT/MediaScope.xcodeproj" \
     -scheme MediaScope \
     -configuration Release \
     -archivePath "$ARCHIVE_PATH" \
     -destination 'platform=macOS' \
+    "${EXTRA_BUILD_ARGS[@]}" \
     2>&1 | grep -E "^(/|error:|warning:|\*\*)" | tail -20 || true
 
 if [[ ! -d "$ARCHIVE_PATH" ]]; then
