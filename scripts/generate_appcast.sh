@@ -1,62 +1,38 @@
 #!/usr/bin/env bash
 # Génère docs/appcast.xml depuis les releases publiées sur GitHub.
-# Signe chaque DMG avec la clé privée Sparkle (sign_update).
-#
-# Usage : ./scripts/generate_appcast.sh
-# Pré-requis :
-#   - gh CLI authentifié
-#   - sign_update installé (fourni par Sparkle : `Sparkle/bin/sign_update`)
-#   - clé privée stockée dans le Keychain via : `Sparkle/bin/generate_keys`
-#
-# Sortie : docs/appcast.xml — à pusher pour que les utilisateurs voient les MAJ.
+# Signe chaque DMG avec la clé Ed25519 stockée dans le Keychain (via sign_update).
 
 set -e
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APPCAST="$ROOT/docs/appcast.xml"
 REPO="misilab/MisiInfo"
-SIGN_UPDATE="${SIGN_UPDATE:-$ROOT/scripts/sign_update}"
+SIGN_UPDATE="$ROOT/scripts/sign_update"
+GH="${GH:-/tmp/gh}"
+[[ ! -x "$GH" ]] && GH=$(which gh 2>/dev/null || echo "")
 
-if [[ ! -x "$SIGN_UPDATE" ]]; then
-    SIGN_UPDATE=$(which sign_update 2>/dev/null || true)
+if [[ -z "$GH" ]]; then
+    echo "❌ gh CLI introuvable"
+    exit 1
 fi
-if [[ -z "$SIGN_UPDATE" ]] || [[ ! -x "$SIGN_UPDATE" ]]; then
-    echo "❌ sign_update introuvable. Récupère le binaire depuis Sparkle :"
-    echo "   curl -L https://github.com/sparkle-project/Sparkle/releases/latest/download/Sparkle-{VERSION}.tar.xz -o /tmp/sparkle.tar.xz"
-    echo "   tar xf /tmp/sparkle.tar.xz -C /tmp/"
-    echo "   cp /tmp/Sparkle/bin/sign_update $ROOT/scripts/sign_update"
+if [[ ! -x "$SIGN_UPDATE" ]]; then
+    echo "❌ scripts/sign_update introuvable. Re-télécharge Sparkle dans /tmp."
     exit 1
 fi
 
-GH="${GH:-/tmp/gh}"
-[[ ! -x "$GH" ]] && GH=$(which gh)
-
 echo "📋 Lecture des releases GitHub…"
-RELEASES_JSON=$($GH api "repos/$REPO/releases?per_page=20")
+JSON_FILE=$(mktemp)
+$GH api "repos/$REPO/releases?per_page=20" > "$JSON_FILE"
 
-cat > "$APPCAST" <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
-     xmlns:dc="http://purl.org/dc/elements/1.1/"
-     version="2.0">
-    <channel>
-        <title>MisiInfo</title>
-        <description>Notes de mise à jour MisiInfo</description>
-        <language>fr</language>
-        <link>https://github.com/$REPO</link>
-EOF
-
-echo "$RELEASES_JSON" | python3 - "$APPCAST" "$REPO" "$SIGN_UPDATE" <<'PYEOF'
+python3 - "$APPCAST" "$REPO" "$SIGN_UPDATE" "$JSON_FILE" <<'PYEOF'
 import json, sys, subprocess, os, urllib.request, tempfile, re
 from email.utils import format_datetime
 from datetime import datetime
 
-appcast_path = sys.argv[1]
-repo = sys.argv[2]
-sign_update = sys.argv[3]
-releases = json.load(sys.stdin)
+appcast_path, repo, sign_update, json_path = sys.argv[1:5]
+with open(json_path) as f:
+    releases = json.load(f)
 
-# Filtre : pas de prerelease/draft, tag semver vN.N.N
 def semver_key(tag):
     m = re.match(r"^v?(\d+)\.(\d+)(?:\.(\d+))?(?:\.(\d+))?$", tag)
     if not m: return None
@@ -73,41 +49,46 @@ if not valid:
     print("⚠️  Aucune release semver valide trouvée")
     sys.exit(0)
 
-items = []
-with open(appcast_path, "a") as f:
+# Écrit le header + items + footer dans appcast.xml
+with open(appcast_path, "w", encoding="utf-8") as f:
+    f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+    f.write('<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"\n')
+    f.write('     xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">\n')
+    f.write('    <channel>\n')
+    f.write('        <title>MisiInfo</title>\n')
+    f.write('        <description>Notes de mise à jour MisiInfo</description>\n')
+    f.write('        <language>fr</language>\n')
+    f.write(f'        <link>https://github.com/{repo}</link>\n')
+
     for r in valid:
         tag = r["tag_name"]
         version = tag.lstrip("vV")
         title = r["name"] or f"MisiInfo {version}"
-        date_str = r["published_at"]  # ISO 8601
+        date_str = r["published_at"]
         pub_dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         rfc822 = format_datetime(pub_dt)
         notes = (r["body"] or "").strip()
         notes_escaped = notes.replace("]]>", "]]]]><![CDATA[>")
 
-        # Asset DMG
         dmg = next((a for a in r["assets"] if a["name"].lower().endswith(".dmg")), None)
         if not dmg:
             print(f"⚠️  {tag} sans DMG")
             continue
 
-        # Téléchargement + signature Ed25519
         with tempfile.NamedTemporaryFile(suffix=".dmg", delete=False) as tmp:
-            print(f"⬇️  Téléchargement {dmg['name']} ({dmg['size']} octets)…")
-            urllib.request.urlretrieve(dmg["browser_download_url"], tmp.name)
-            print(f"🔏 Signature Ed25519…")
-            result = subprocess.run(
-                [sign_update, tmp.name],
-                capture_output=True, text=True, check=False
-            )
-            os.unlink(tmp.name)
+            tmp_path = tmp.name
+        print(f"⬇️  {tag} : téléchargement {dmg['name']} ({dmg['size']} octets)…")
+        urllib.request.urlretrieve(dmg["browser_download_url"], tmp_path)
+        print(f"🔏 Signature Ed25519…")
+        result = subprocess.run([sign_update, tmp_path], capture_output=True, text=True, check=False)
+        os.unlink(tmp_path)
+
         if result.returncode != 0:
             print(f"⚠️  sign_update a échoué pour {tag} : {result.stderr.strip()}")
             continue
-        # sign_update output : sparkle:edSignature="..." length="..."
         sig_match = re.search(r'sparkle:edSignature="([^"]+)"\s+length="(\d+)"', result.stdout)
         if not sig_match:
-            print(f"⚠️  Pas de signature parsable pour {tag}")
+            print(f"⚠️  Pas de signature parsable pour {tag} : {result.stdout}")
             continue
         signature = sig_match.group(1)
         length = sig_match.group(2)
@@ -131,16 +112,13 @@ with open(appcast_path, "a") as f:
 """)
         print(f"  ✅ {tag}")
 
-print("✅ appcast généré")
+    f.write('    </channel>\n')
+    f.write('</rss>\n')
+
+print("✅ appcast généré :", appcast_path)
 PYEOF
 
-cat >> "$APPCAST" <<EOF
-    </channel>
-</rss>
-EOF
-
+rm -f "$JSON_FILE"
 echo ""
 echo "📄 Appcast : $APPCAST"
-echo "👉 N'oublie pas : git add docs/appcast.xml && git push"
-echo "   Les utilisateurs liront l'appcast à :"
-echo "   https://raw.githubusercontent.com/$REPO/main/docs/appcast.xml"
+echo "👉 git add docs/appcast.xml && git commit -m \"appcast\" && git push"
