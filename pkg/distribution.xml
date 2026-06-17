@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<installer-gui-script minSpecVersion="1">
+    <title>MisiInfo</title>
+    <organization>fr.misilab</organization>
+    <domains enable_localSystem="true"/>
+    <options customize="never" require-scripts="false" rootVolumeOnly="true" hostArchitectures="x86_64,arm64"/>
+    <welcome file="welcome.txt" mime-type="text/plain"/>
+    <license file="LICENSE.txt" mime-type="text/plain"/>
+    <conclusion file="conclusion.txt" mime-type="text/plain"/>
+    <background file="background.png" mime-type="image/png" alignment="bottomleft" scaling="proportional"/>
+    <background-darkAqua file="background.png" mime-type="image/png" alignment="bottomleft" scaling="proportional"/>
+    <pkg-ref id="fr.misilab.MisiInfo"/>
+    <pkg-ref id="fr.misilab.MisiInfo.cli"/>
+    <os-version min="14.0"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="fr.misilab.MisiInfo"/>
+            <line choice="fr.misilab.MisiInfo.cli"/>
+        </line>
+    </choices-outline>
+    <choice id="default" title="MisiInfo"/>
+    <choice id="fr.misilab.MisiInfo" visible="false">
+        <pkg-ref id="fr.misilab.MisiInfo"/>
+    </choice>
+    <choice id="fr.misilab.MisiInfo.cli" visible="false">
+        <pkg-ref id="fr.misilab.MisiInfo.cli"/>
+    </choice>
+    <pkg-ref id="fr.misilab.MisiInfo" version="1.4.0" onConclusion="none">MisiInfo.pkg</pkg-ref>
+    <pkg-ref id="fr.misilab.MisiInfo.cli" version="1.4.0" onConclusion="none">MisiInfoCLI.pkg</pkg-ref>
+</installer-gui-script>

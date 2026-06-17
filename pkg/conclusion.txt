@@ -1,0 +1,35 @@
+Installation terminée. Installation complete.
+
+═══════════════════════════════════════════════════════════════════
+
+MisiInfo est désormais installé dans /Applications et accessible
+depuis le Launchpad ou Spotlight (recherche : MisiInfo).
+
+MisiInfo is now installed in /Applications and accessible from the
+Launchpad or Spotlight (search: MisiInfo).
+
+Le binaire CLI « misiinfo » est installé dans /usr/local/bin.
+Utilisation : misiinfo --help
+
+The CLI binary « misiinfo » is installed in /usr/local/bin.
+Usage: misiinfo --help
+
+═══════════════════════════════════════════════════════════════════
+
+MISES À JOUR AUTOMATIQUES — AUTOMATIC UPDATES
+
+MisiInfo vérifiera automatiquement les nouvelles versions à chaque
+ouverture, via le framework Sparkle. Aucune intervention manuelle
+ne sera nécessaire pour les prochaines versions.
+
+MisiInfo will automatically check for new versions every time it
+launches, via the Sparkle framework. No manual intervention will be
+required for future updates.
+
+═══════════════════════════════════════════════════════════════════
+
+Support : https://github.com/misilab/MisiInfo
+Contact : contact@misiraca.com
+
+Merci d'utiliser MisiInfo !
+Thank you for using MisiInfo!
