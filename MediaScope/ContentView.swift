@@ -37,6 +37,12 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 struct ContentView: View {
     @State private var library = MediaLibrary()
     @State private var showImporter = false
+    @State private var comparisonMode = false
+    @State private var comparisonRightID: MediaItem.ID?
+
+    private var readyComparisonCandidates: [MediaItem] {
+        library.items.filter { $0.analysis != nil }
+    }
     @Bindable var updateChecker: UpdateChecker
     @EnvironmentObject var sparkle: SparkleManager
     @AppStorage("appLanguage") private var languageRaw: String = AppLanguage.system.rawValue
@@ -56,9 +62,19 @@ struct ContentView: View {
                 .frame(minWidth: 260)
                 .navigationSplitViewColumnWidth(min: 260, ideal: 300, max: 380)
         } detail: {
-            AnalysisDetailView(item: library.selectedItem, mode: library.viewMode)
-                .frame(minWidth: 560)
-                .background(.background.secondary)
+            Group {
+                if comparisonMode,
+                   let aID = library.selectionID,
+                   let aAnalysis = library.items.first(where: { $0.id == aID })?.analysis,
+                   let bID = comparisonRightID,
+                   let bAnalysis = library.items.first(where: { $0.id == bID })?.analysis {
+                    ComparisonView(left: aAnalysis, right: bAnalysis)
+                } else {
+                    AnalysisDetailView(item: library.selectedItem, mode: library.viewMode)
+                }
+            }
+            .frame(minWidth: 560)
+            .background(.background.secondary)
         }
         .navigationSplitViewStyle(.balanced)
         .environment(\.locale, language.locale ?? Locale.current)
@@ -73,6 +89,37 @@ struct ContentView: View {
                     }
                     .pickerStyle(.segmented)
                     .frame(width: 220)
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                if readyComparisonCandidates.count >= 2 {
+                    Menu {
+                        Toggle(isOn: $comparisonMode) {
+                            Label("Mode comparaison", systemImage: "rectangle.split.2x1")
+                        }
+                        if comparisonMode {
+                            Divider()
+                            Text("Comparer à")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            ForEach(readyComparisonCandidates.filter { $0.id != library.selectionID }, id: \.id) { item in
+                                Button {
+                                    comparisonRightID = item.id
+                                } label: {
+                                    HStack {
+                                        Text(item.displayName)
+                                        if comparisonRightID == item.id {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("Comparer", systemImage: "rectangle.split.2x1")
+                    }
+                    .help("Comparer 2 fichiers côte à côte")
                 }
             }
             ToolbarItem(placement: .primaryAction) {

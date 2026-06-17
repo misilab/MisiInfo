@@ -105,12 +105,22 @@ private struct FailureView: View {
 struct AnalysisReportView: View {
     let analysis: MediaAnalysis
     let mode: ViewMode
+    @AppStorage("conformityPresetID") private var conformityPresetID: String = ""
+
+    private var conformityBinding: Binding<String?> {
+        Binding(
+            get: { conformityPresetID.isEmpty ? nil : conformityPresetID },
+            set: { conformityPresetID = $0 ?? "" }
+        )
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 header
                 summaryGrid
+
+                ConformitySection(analysis: analysis, selectedPresetID: conformityBinding)
 
                 ForEach(Array(analysis.videoTracks.enumerated()), id: \.element.id) { _, track in
                     VideoSection(track: track, mode: mode)
