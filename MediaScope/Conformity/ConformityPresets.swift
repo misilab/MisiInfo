@@ -166,6 +166,72 @@ nonisolated enum RuleBuilders {
             return (tp <= dbtp ? .pass : .fail, String(format: "%.1f dBTP", tp))
         }
     }
+
+    static func audioBitDepth(min: Int) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let a = analysis.audioTracks.first, let bd = a.bitsPerChannel else { return (.notApplicable, "—") }
+            return (bd >= min ? .pass : .fail, "\(bd) bits")
+        }
+    }
+
+    static func channelCount(equals n: Int) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let a = analysis.audioTracks.first else { return (.notApplicable, "—") }
+            return (a.channelCount == n ? .pass : .fail, "\(a.channelCount)")
+        }
+    }
+
+    static func channelCount(in counts: Set<Int>) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let a = analysis.audioTracks.first else { return (.notApplicable, "—") }
+            return (counts.contains(a.channelCount) ? .pass : .fail, "\(a.channelCount)")
+        }
+    }
+
+    static func containerExtensionIn(_ exts: Set<String>) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            let e = analysis.general.containerExtension.lowercased()
+            return (exts.map { $0.lowercased() }.contains(e) ? .pass : .fail, analysis.general.containerExtension)
+        }
+    }
+
+    static func matrixContains(_ keyword: String) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let v = analysis.videoTracks.first, let m = v.yCbCrMatrix else { return (.notApplicable, "—") }
+            return (m.contains(keyword) ? .pass : .fail, m)
+        }
+    }
+
+    static func colorRangeContains(_ keyword: String) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let v = analysis.videoTracks.first, let cr = v.colorRange else { return (.notApplicable, "—") }
+            return (cr.localizedCaseInsensitiveContains(keyword) ? .pass : .fail, cr)
+        }
+    }
+
+    static func progressiveScan(severity: ConformityStatus = .fail) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let v = analysis.videoTracks.first, let f = v.fieldOrder else { return (.notApplicable, "—") }
+            let prog = f.localizedCaseInsensitiveContains("progress")
+            return (prog ? .pass : severity, f)
+        }
+    }
+
+    static func minimumBitrate(_ minBitsPerSec: Double) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let v = analysis.videoTracks.first, v.estimatedDataRate > 0 else { return (.notApplicable, "—") }
+            let mbps = Double(v.estimatedDataRate) / 1_000_000
+            return (Double(v.estimatedDataRate) >= minBitsPerSec ? .pass : .fail, String(format: "%.1f Mb/s", mbps))
+        }
+    }
+
+    static func maximumBitrate(_ maxBitsPerSec: Double) -> @Sendable (MediaAnalysis) -> (ConformityStatus, String) {
+        { analysis in
+            guard let v = analysis.videoTracks.first, v.estimatedDataRate > 0 else { return (.notApplicable, "—") }
+            let mbps = Double(v.estimatedDataRate) / 1_000_000
+            return (Double(v.estimatedDataRate) <= maxBitsPerSec ? .pass : .warning, String(format: "%.1f Mb/s", mbps))
+        }
+    }
 }
 
 // MARK: - Préréglages embarqués
@@ -275,61 +341,146 @@ nonisolated enum ConformityPresets {
     static let netflix4KSDR = ConformityPreset(
         id: "netflix.4k.sdr",
         name: "Netflix 4K SDR",
-        summary: "Livraison Netflix 4K UHD en SDR (BT.709/BT.2020).",
+        summary: "Livraison Netflix 4K UHD en SDR — Originals Delivery Specifications.",
         rules: [
             ConformityRule(id: "v.codec", title: "Codec vidéo", severity: .mandatory,
-                           expectedHumanReadable: "HEVC ou H.264 high profile",
-                           explanation: "HEVC préféré ; H.264 high accepté en 4K SDR.",
-                           evaluator: RuleBuilders.videoCodec(in: ["HEVC", "H.265", "AVC", "H.264"])),
+                           expectedHumanReadable: "Apple ProRes 422 HQ ou supérieur",
+                           explanation: "Netflix exige un master en ProRes 422 HQ minimum pour le 4K SDR.",
+                           evaluator: RuleBuilders.videoCodec(in: ["ProRes 422 HQ", "ProRes 4444"])),
             ConformityRule(id: "v.res", title: "Résolution", severity: .mandatory,
-                           expectedHumanReadable: "3840×2160",
-                           explanation: "4K UHD natif requis.",
-                           evaluator: RuleBuilders.exactResolution(width: 3840, height: 2160)),
-            ConformityRule(id: "v.bd", title: "Profondeur", severity: .recommended,
+                           expectedHumanReadable: "3840×2160 ou 4096×2160",
+                           explanation: "Format de livraison Netflix : 4K UHD ou DCI 4K natif.",
+                           evaluator: RuleBuilders.minResolution(width: 3840, height: 2160)),
+            ConformityRule(id: "v.bd", title: "Profondeur", severity: .mandatory,
                            expectedHumanReadable: "≥ 10 bits",
-                           explanation: "10 bits évite le banding sur 4K.",
+                           explanation: "10 bits évite le banding sur 4K et conserve l'étalonnage.",
                            evaluator: RuleBuilders.minBitDepth(10)),
+            ConformityRule(id: "v.chroma", title: "Sous-échantillonnage", severity: .mandatory,
+                           expectedHumanReadable: "4:2:2 ou 4:4:4",
+                           explanation: "Pas de 4:2:0 sur un master Netflix.",
+                           evaluator: RuleBuilders.chromaSubsamplingIn(["4:2:2", "4:4:4", "4:4:4:4"])),
             ConformityRule(id: "v.fps", title: "FPS", severity: .mandatory,
-                           expectedHumanReadable: "23.976/24/25/29.97/30",
-                           explanation: "Cadences standard.",
+                           expectedHumanReadable: "23.976 / 24 / 25 / 29.97 / 30",
+                           explanation: "Cadences standard. 48/50/60 acceptés avec accord préalable.",
                            evaluator: RuleBuilders.fpsIn([23.976, 24, 25, 29.97, 30])),
-            ConformityRule(id: "a.sr", title: "Fréquence audio", severity: .mandatory,
-                           expectedHumanReadable: "≥ 48 kHz",
-                           explanation: "48 kHz minimum.",
-                           evaluator: RuleBuilders.minSampleRate(48000))
+            ConformityRule(id: "v.scan", title: "Balayage", severity: .mandatory,
+                           expectedHumanReadable: "Progressif",
+                           explanation: "Netflix n'accepte pas les masters entrelacés.",
+                           evaluator: RuleBuilders.progressiveScan()),
+            ConformityRule(id: "c.primaries", title: "Primaries", severity: .mandatory,
+                           expectedHumanReadable: "BT.709 ou BT.2020",
+                           explanation: "Rec.709 pour SDR. Rec.2020 si le master est gradé wide gamut.",
+                           evaluator: { a in
+                               guard let p = a.videoTracks.first?.colorPrimaries else { return (.notApplicable, "—") }
+                               return ((p.contains("709") || p.contains("2020")) ? .pass : .fail, p)
+                           }),
+            ConformityRule(id: "c.range", title: "Plage de couleurs", severity: .mandatory,
+                           expectedHumanReadable: "Limited (Video range)",
+                           explanation: "Master Netflix = limited range (16-235 sur 10 bits).",
+                           evaluator: RuleBuilders.colorRangeContains("limit")),
+            ConformityRule(id: "a.sr", title: "Sample rate audio", severity: .mandatory,
+                           expectedHumanReadable: "48 kHz",
+                           explanation: "Standard pro broadcast/cinéma.",
+                           evaluator: RuleBuilders.minSampleRate(48000)),
+            ConformityRule(id: "a.bd", title: "Profondeur audio", severity: .mandatory,
+                           expectedHumanReadable: "24 bits PCM",
+                           explanation: "Master Netflix : PCM 24 bits non compressé.",
+                           evaluator: RuleBuilders.audioBitDepth(min: 24)),
+            ConformityRule(id: "a.channels", title: "Canaux audio", severity: .recommended,
+                           expectedHumanReadable: "6 (5.1) ou 8 (7.1)",
+                           explanation: "Surround pour master cinéma. Stéréo pour secondaire.",
+                           evaluator: RuleBuilders.channelCount(in: [2, 6, 8])),
+            ConformityRule(id: "container", title: "Conteneur", severity: .recommended,
+                           expectedHumanReadable: "MOV ou MXF",
+                           explanation: "Standard de livraison Netflix.",
+                           evaluator: RuleBuilders.containerExtensionIn(["mov", "mxf"]))
         ]
     )
 
     // MARK: EBU R128 (Broadcast)
     static let broadcastEBU_R128 = ConformityPreset(
         id: "broadcast.ebu.r128",
-        name: "Broadcast EBU R128",
-        summary: "Norme EBU R128 (Loudness) pour la TV européenne — France TV, BBC, ARD, ZDF, RAI…",
+        name: "Broadcast EBU R128 (HD TV)",
+        summary: "Norme EBU R128 + R103 pour la TV européenne HD — France TV, BBC, ARD, ZDF, RAI…",
         rules: [
-            ConformityRule(
-                id: "audio.lufs",
-                title: "Loudness intégré",
-                severity: .mandatory,
-                expectedHumanReadable: "−23 LUFS ±1 LU",
-                explanation: "EBU R128 impose −23 LUFS pour la TV. Cible exacte ±1 LU autorisée.",
-                evaluator: RuleBuilders.lufsInRange(low: -24, high: -22)
-            ),
-            ConformityRule(
-                id: "audio.truepeak",
-                title: "True Peak max",
-                severity: .mandatory,
-                expectedHumanReadable: "≤ −1 dBTP",
-                explanation: "EBU R128 limite le crête vraie à −1 dBTP pour éviter le clipping après codage lossy.",
-                evaluator: RuleBuilders.truePeakBelow(-1.0)
-            ),
-            ConformityRule(
-                id: "audio.sr",
-                title: "Fréquence d'échantillonnage",
-                severity: .recommended,
-                expectedHumanReadable: "48 kHz",
-                explanation: "Standard broadcast européen.",
-                evaluator: RuleBuilders.minSampleRate(48000)
-            )
+            // AUDIO — Loudness (EBU R128)
+            ConformityRule(id: "audio.lufs", title: "Loudness intégré", severity: .mandatory,
+                           expectedHumanReadable: "−23 LUFS ±1 LU",
+                           explanation: "EBU R128 §2 : −23 LUFS pour la TV. Cible exacte ±1 LU autorisée pour les programmes courts.",
+                           evaluator: RuleBuilders.lufsInRange(low: -24, high: -22)),
+            ConformityRule(id: "audio.truepeak", title: "True Peak max", severity: .mandatory,
+                           expectedHumanReadable: "≤ −1 dBTP",
+                           explanation: "EBU R128 §6 : crête vraie ≤ −1 dBTP pour éviter le clipping inter-sample après codage lossy.",
+                           evaluator: RuleBuilders.truePeakBelow(-1.0)),
+            // AUDIO — Format
+            ConformityRule(id: "audio.sr", title: "Sample rate audio", severity: .mandatory,
+                           expectedHumanReadable: "48 kHz",
+                           explanation: "EBU R128 + ITU-R BS.1770 : sample rate broadcast = 48 kHz.",
+                           evaluator: RuleBuilders.minSampleRate(48000)),
+            ConformityRule(id: "audio.bd", title: "Profondeur audio", severity: .recommended,
+                           expectedHumanReadable: "24 bits PCM",
+                           explanation: "Format de livraison master broadcast standard.",
+                           evaluator: RuleBuilders.audioBitDepth(min: 24)),
+            ConformityRule(id: "audio.codec", title: "Codec audio", severity: .recommended,
+                           expectedHumanReadable: "PCM ou AC-3 (Dolby Digital)",
+                           explanation: "Livraison master = PCM non compressé. AC-3 pour diffusion DVB.",
+                           evaluator: RuleBuilders.audioCodec(in: ["PCM", "AC-3", "Dolby Digital", "Linear"])),
+            ConformityRule(id: "audio.channels", title: "Canaux audio", severity: .recommended,
+                           expectedHumanReadable: "2 (stereo) ou 6 (5.1)",
+                           explanation: "Stéréo 2.0 ou surround 5.1 (L R C LFE Ls Rs).",
+                           evaluator: RuleBuilders.channelCount(in: [2, 6])),
+            // VIDEO — Format
+            ConformityRule(id: "video.res", title: "Résolution HD", severity: .mandatory,
+                           expectedHumanReadable: "1920×1080 (Full HD)",
+                           explanation: "Standard EBU R124 pour la TV HD européenne.",
+                           evaluator: RuleBuilders.exactResolution(width: 1920, height: 1080)),
+            ConformityRule(id: "video.fps", title: "Fréquence d'images", severity: .mandatory,
+                           expectedHumanReadable: "25 fps (Europe) ou 50p",
+                           explanation: "EBU 50 Hz : 25i ou 50p selon le type de programme.",
+                           evaluator: RuleBuilders.fpsIn([25, 50])),
+            ConformityRule(id: "video.bd", title: "Profondeur vidéo", severity: .recommended,
+                           expectedHumanReadable: "≥ 8 bits (10 bits master)",
+                           explanation: "8 bits diffusion. Master livré en 10 bits pour étalonnage.",
+                           evaluator: RuleBuilders.minBitDepth(8)),
+            ConformityRule(id: "video.scan", title: "Balayage", severity: .recommended,
+                           expectedHumanReadable: "Progressif (1080p) ou entrelacé (1080i)",
+                           explanation: "Selon le contrat. La plupart des broadcasters acceptent les deux.",
+                           evaluator: RuleBuilders.progressiveScan()),
+            // VIDEO — Colorimétrie
+            ConformityRule(id: "color.primaries", title: "Primaries", severity: .mandatory,
+                           expectedHumanReadable: "BT.709",
+                           explanation: "Rec.709 = espace HDTV standard.",
+                           evaluator: RuleBuilders.colorPrimariesContains("709")),
+            ConformityRule(id: "color.transfer", title: "Transfer", severity: .mandatory,
+                           expectedHumanReadable: "BT.709",
+                           explanation: "Courbe gamma TV.",
+                           evaluator: RuleBuilders.transferContains("709")),
+            ConformityRule(id: "color.matrix", title: "Matrice", severity: .mandatory,
+                           expectedHumanReadable: "BT.709",
+                           explanation: "Matrice YCbCr Rec.709.",
+                           evaluator: RuleBuilders.matrixContains("709")),
+            ConformityRule(id: "color.range", title: "Plage de couleurs", severity: .mandatory,
+                           expectedHumanReadable: "Limited (TV / 16-235)",
+                           explanation: "Broadcast = limited range. Full range invalide pour TV.",
+                           evaluator: RuleBuilders.colorRangeContains("limit")),
+            ConformityRule(id: "video.chroma", title: "Chroma", severity: .recommended,
+                           expectedHumanReadable: "4:2:2 (master) ou 4:2:0 (diffusion)",
+                           explanation: "Master broadcast = 4:2:2 (XDCAM HD422). Diffusion = 4:2:0.",
+                           evaluator: RuleBuilders.chromaSubsamplingIn(["4:2:2", "4:2:0"])),
+            // VIDEO — Codec / débit
+            ConformityRule(id: "video.codec", title: "Codec vidéo", severity: .recommended,
+                           expectedHumanReadable: "XDCAM HD422 / AVC-Intra / ProRes HQ",
+                           explanation: "Codecs de livraison broadcast pro.",
+                           evaluator: RuleBuilders.videoCodec(in: ["XDCAM", "AVC-Intra", "ProRes", "MPEG-2", "DV"])),
+            ConformityRule(id: "video.bitrate", title: "Débit vidéo master", severity: .recommended,
+                           expectedHumanReadable: "≥ 50 Mb/s",
+                           explanation: "XDCAM HD422 = 50 Mb/s. AVC-Intra 100 = 100 Mb/s.",
+                           evaluator: RuleBuilders.minimumBitrate(50_000_000)),
+            // CONTAINER
+            ConformityRule(id: "container", title: "Conteneur", severity: .recommended,
+                           expectedHumanReadable: "MXF (OP1a) ou MOV",
+                           explanation: "MXF = standard SMPTE broadcast. MOV pour livraison ProRes.",
+                           evaluator: RuleBuilders.containerExtensionIn(["mxf", "mov"]))
         ]
     )
 
@@ -476,11 +627,20 @@ nonisolated enum ConformityChecker {
     }
 
     /// Score sur 100, calculé sur les règles mandatory + recommended uniquement.
+    /// Si TOUTES les règles sont N/A (preset qui exige du contenu absent du fichier),
+    /// on retourne 0 et non 100 — sinon un fichier audio-seul contre un preset HDR10
+    /// passerait pour 100 % conforme à tort.
     static func score(_ results: [ConformityResult]) -> Double {
-        let weighted = results.filter { $0.severity != .informational && $0.status != .notApplicable }
-        guard !weighted.isEmpty else { return 100 }
-        let passing = weighted.filter { $0.status == .pass }.count
-        return Double(passing) / Double(weighted.count) * 100
+        let evaluable = results.filter { $0.severity != .informational }
+        let applicable = evaluable.filter { $0.status != .notApplicable }
+        // Cas pathologique : aucune règle applicable → preset incompatible avec le média
+        if applicable.isEmpty {
+            return evaluable.isEmpty ? 100 : 0
+        }
+        // Les règles non applicables pèsent comme des échecs partiels (pondération 0.5)
+        let passing = applicable.filter { $0.status == .pass }.count
+        let denominator = applicable.count + (evaluable.count - applicable.count) / 2
+        return Double(passing) / Double(max(1, denominator)) * 100
     }
 
     /// Nombre de mandatory failed.

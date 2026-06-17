@@ -36,10 +36,14 @@ struct MisiInfoCLI {
             exit(64)
         }
 
+        var hadAnalysisError = false
+        var hadCriticalFailure = false
+
         for path in paths {
             let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
             guard FileManager.default.fileExists(atPath: url.path) else {
                 fputs("Fichier introuvable : \(url.path)\n", stderr)
+                hadAnalysisError = true
                 continue
             }
             do {
@@ -53,14 +57,21 @@ struct MisiInfoCLI {
                 if let preset = checkPreset {
                     let results = CLIConformity.check(info, preset: preset)
                     CLIPrinter.printConformity(presetID: preset, results: results)
-                    let critical = results.contains { $0.severity == "mandatory" && $0.status == "fail" }
-                    if critical { exit(2) }
+                    if results.contains(where: { $0.severity == "mandatory" && $0.status == "fail" }) {
+                        hadCriticalFailure = true
+                    }
                 }
             } catch {
                 fputs("Erreur d'analyse \(url.lastPathComponent) : \(error.localizedDescription)\n", stderr)
-                exit(1)
+                hadAnalysisError = true
             }
         }
+
+        // Flush + exit code agrégé : priorité critical > error > OK
+        fflush(stdout)
+        fflush(stderr)
+        if hadCriticalFailure { exit(2) }
+        if hadAnalysisError { exit(1) }
     }
 
     static func printUsage() {

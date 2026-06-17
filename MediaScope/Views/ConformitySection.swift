@@ -79,11 +79,13 @@ struct ConformitySection: View {
                 Circle()
                     .stroke(overallColor.opacity(0.2), lineWidth: 6)
                     .frame(width: 64, height: 64)
-                Circle()
-                    .trim(from: 0, to: max(0.01, score / 100))
-                    .stroke(overallColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                    .frame(width: 64, height: 64)
-                    .rotationEffect(.degrees(-90))
+                if score > 0 {
+                    Circle()
+                        .trim(from: 0, to: score / 100)
+                        .stroke(overallColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .frame(width: 64, height: 64)
+                        .rotationEffect(.degrees(-90))
+                }
                 VStack(spacing: -2) {
                     Text(String(format: "%.0f", score))
                         .font(.title3.weight(.bold).monospacedDigit())

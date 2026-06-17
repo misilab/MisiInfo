@@ -158,7 +158,8 @@ struct ComparisonView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(color)
                 } else {
-                    Text("\(diff) différence\(diff > 1 ? "s" : "") sur \(total) champs comparés")
+                    // Format générique sans pluralisation FR/EN/ES — délégué au xcstrings
+                    Text("\(diff) diff(s) sur \(total) champs comparés")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(color)
                 }
@@ -186,9 +187,10 @@ struct ComparisonRow: Identifiable, Hashable {
     let rightValue: String
 
     var differs: Bool {
-        // Considère "—" comme "même" si les deux le sont
-        if leftValue == rightValue { return false }
-        return true
+        // Normalisation : comparaison case-insensitive + trim espaces (insécables inclus).
+        let l = leftValue.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let r = rightValue.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return l != r
     }
 }
 
