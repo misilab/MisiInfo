@@ -123,8 +123,20 @@ struct AnalysisReportView: View {
 
                 TimecodeSection(timecode: analysis.timecode, analysis: analysis)
 
+                if analysis.camera != nil || analysis.gpsLocation != nil {
+                    CaptureSection(analysis: analysis)
+                }
+
+                if !analysis.chapters.isEmpty {
+                    ChaptersSection(chapters: analysis.chapters)
+                }
+
                 TracksSection(analysis: analysis)
                 MetadataSection(items: analysis.metadata, mode: mode)
+
+                if mode == .expert {
+                    SystemMetadataSection(analysis: analysis, mode: mode)
+                }
 
                 if let mi = analysis.mediaInfo, !mi.isEmpty {
                     MediaInfoSection(data: mi, mode: mode)

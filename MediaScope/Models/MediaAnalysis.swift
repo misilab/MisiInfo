@@ -9,6 +9,20 @@ nonisolated struct MediaAnalysis: Identifiable, Hashable, Sendable {
     let timecode: TimecodeInfo?
     let metadata: [MetadataItem]
     let mediaInfo: MediaInfoData?
+    /// AVMediaCharacteristics (containsHDRVideo, containsAlphaChannel, audible, legible, voiceOver…).
+    var mediaCharacteristics: Set<String> = []
+    /// Chapter markers QuickTime.
+    var chapters: [ChapterMarker] = []
+    /// GPS extrait des métadonnées (iPhone, drones, GoPro…).
+    var gpsLocation: GPSLocation?
+    /// Infos caméra parsées des items QuickTime/EXIF.
+    var camera: CameraInfo?
+    /// Tags Finder macOS (couleurs/labels).
+    var finderTags: [String] = []
+    /// Commentaire Spotlight (Get Info → Commentaires).
+    var spotlightComment: String?
+    /// xattr com.apple.metadata:kMDItemWhereFroms (source de téléchargement).
+    var downloadSource: String?
 }
 
 nonisolated struct GeneralInfo: Hashable, Sendable {
@@ -74,6 +88,8 @@ nonisolated struct VideoTrack: Identifiable, Hashable, Sendable {
     let fieldOrder: String?
     let isHDR: Bool
     let hdrFormat: String?
+    var dolbyVisionProfile: String?
+    var pixelFormatDetailed: String?
     let maxCLL: Int?
     let maxFALL: Int?
     let hasMasteringDisplay: Bool

@@ -64,6 +64,8 @@ struct VideoSection: View {
                 InfoRow(label: "Profondeur par composante", value: track.bitDepth.map { "\($0) bits" })
                 InfoRow(label: "Sous-échantillonnage", value: track.chromaSubsampling)
                 InfoRow(label: "Pixel format", value: track.pixelFormat, monospaced: true)
+                InfoRow(label: "Pixel format détaillé", value: track.pixelFormatDetailed, monospaced: true)
+                InfoRow(label: "Profil Dolby Vision", value: track.dolbyVisionProfile)
                 InfoRow(label: "Nombre total de frames", value: track.totalFrames.map { "\($0)" }, monospaced: true)
                 InfoRow(label: "Bits / (Pixel × Image)", value: track.bitsPerPixelFrame.map { String(format: "%.3f", $0) }, monospaced: true)
                 InfoRow(label: "Taille moyenne par frame", value: track.averageFrameSize.map {
@@ -438,3 +440,113 @@ struct FileDetailsSection: View {
         return f.string(from: date)
     }
 }
+
+// MARK: - Capture (GPS + caméra)
+
+struct CaptureSection: View {
+    let analysis: MediaAnalysis
+
+    var body: some View {
+        SectionCard(title: "Capture", systemImage: "camera.viewfinder", tint: .mediaSummary) {
+            if let c = analysis.camera {
+                InfoRow(label: "Marque", value: c.make, essential: true)
+                InfoRow(label: "Modèle", value: c.model, essential: true)
+                InfoRow(label: "Logiciel embarqué", value: c.software)
+                InfoRow(label: "Objectif", value: c.lensModel)
+                InfoRow(label: "Date d'enregistrement", value: c.recordingDate.map { formatted($0) }, essential: true)
+                if c.isLivePhoto == true {
+                    InfoRow(label: "Format", value: "Live Photo / Live Video", localizedValue: true)
+                }
+            }
+            if let gps = analysis.gpsLocation {
+                InfoRow(label: "Coordonnées GPS", value: gps.formatted, monospaced: true, essential: true)
+                if let url = gps.mapsURL {
+                    HStack(alignment: .firstTextBaseline, spacing: 16) {
+                        Text("Carte")
+                            .foregroundStyle(.secondary)
+                            .frame(minWidth: 200, idealWidth: 220, alignment: .leading)
+                        Link(destination: url) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "mappin.and.ellipse")
+                                Text("Ouvrir dans Plans")
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            if analysis.camera == nil && analysis.gpsLocation == nil {
+                InfoRow(label: "Aucune donnée de capture", value: nil)
+            }
+        }
+    }
+
+    private func formatted(_ d: Date) -> String {
+        let f = DateFormatter()
+        f.dateStyle = .full
+        f.timeStyle = .medium
+        return f.string(from: d)
+    }
+}
+
+// MARK: - Chapitres
+
+struct ChaptersSection: View {
+    let chapters: [ChapterMarker]
+
+    var body: some View {
+        SectionCard(title: "Chapitres", systemImage: "list.number", tint: .mediaTracks) {
+            ForEach(Array(chapters.enumerated()), id: \.element.id) { idx, chap in
+                InfoRow(
+                    label: LocalizedStringKey("Chapitre \(idx + 1)"),
+                    value: chap.title.isEmpty
+                        ? chap.startFormatted
+                        : "\(chap.startFormatted) — \(chap.title)",
+                    monospaced: true
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Caractéristiques média + Finder/Spotlight (système macOS)
+
+struct SystemMetadataSection: View {
+    let analysis: MediaAnalysis
+    let mode: ViewMode
+
+    var body: some View {
+        SectionCard(title: "Système macOS", systemImage: "applelogo", tint: .mediaFile) {
+            if !analysis.finderTags.isEmpty {
+                InfoRow(
+                    label: "Tags Finder",
+                    value: analysis.finderTags.joined(separator: ", ")
+                )
+            }
+            if let comment = analysis.spotlightComment {
+                InfoRow(label: "Commentaire Spotlight", value: comment)
+            }
+            if let source = analysis.downloadSource {
+                InfoRow(label: "Source de téléchargement", value: source, monospaced: true)
+            }
+            if mode == .expert && !analysis.mediaCharacteristics.isEmpty {
+                Divider().padding(.vertical, 6)
+                Text("Caractéristiques AVMediaCharacteristics")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 4)
+                ForEach(Array(analysis.mediaCharacteristics).sorted(), id: \.self) { c in
+                    InfoRow(label: LocalizedStringKey(c), value: nil)
+                }
+            }
+            if analysis.finderTags.isEmpty
+                && analysis.spotlightComment == nil
+                && analysis.downloadSource == nil
+                && (analysis.mediaCharacteristics.isEmpty || mode != .expert) {
+                InfoRow(label: "Aucune métadonnée macOS", value: nil)
+            }
+        }
+    }
+}
+

@@ -71,6 +71,17 @@ nonisolated enum MediaAnalyzer {
         // Phase 2 : MediaInfoLib si disponible (graceful fallback)
         let miData = MediaInfoBridge.analyze(url: url)
 
+        // Phase 3 : métadonnées étendues (GPS, EXIF caméra, chapitres, accessibilité,
+        // Finder tags, Spotlight, xattr).
+        let allMetaItems = commonMetadata + rawMetadata
+        let gps = await ExtendedMetadataExtractor.extractGPS(from: allMetaItems)
+        let camera = await ExtendedMetadataExtractor.extractCameraInfo(from: allMetaItems)
+        let chapters = await ExtendedMetadataExtractor.extractChapters(asset: asset)
+        let characteristics = await ExtendedMetadataExtractor.extractMediaCharacteristics(asset: asset)
+        let finderTags = ExtendedMetadataExtractor.extractFinderTags(url: url)
+        let spotlight = ExtendedMetadataExtractor.extractSpotlightComment(url: url)
+        let downloadSource = ExtendedMetadataExtractor.extractDownloadSource(url: url)
+
         return MediaAnalysis(
             general: general,
             videoTracks: videoTracks,
@@ -78,7 +89,14 @@ nonisolated enum MediaAnalyzer {
             subtitleTracks: subtitleTracks,
             timecode: timecode,
             metadata: meta,
-            mediaInfo: miData
+            mediaInfo: miData,
+            mediaCharacteristics: characteristics,
+            chapters: chapters,
+            gpsLocation: gps,
+            camera: camera.hasAny ? camera : nil,
+            finderTags: finderTags,
+            spotlightComment: spotlight,
+            downloadSource: downloadSource
         )
     }
 
@@ -324,7 +342,18 @@ nonisolated enum MediaAnalyzer {
         // Vignette du premier frame
         let poster = PreviewExtractor.extractPosterFrame(asset: asset)
 
-        return VideoTrack(
+        // Profil Dolby Vision détaillé (parsing atom dvcC/dvvC)
+        let atomsForDV = extensions[kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms as String] as? [String: Any]
+        let dolbyVisionProfile = ExtendedMetadataExtractor.dolbyVisionProfile(extensionAtoms: atomsForDV)
+
+        // Pixel format détaillé (style FFmpeg : yuv420p10le, p010, …)
+        let pixelFormatDetailed = ExtendedMetadataExtractor.detailedPixelFormat(
+            fourCC: fourCC,
+            bitDepth: depthFromExt ?? CodecNames.bitDepth(forVideoFourCC: fourCC),
+            chromaSubsampling: CodecNames.chromaSubsampling(forVideoFourCC: fourCC)
+        )
+
+        var videoTrack = VideoTrack(
             trackID: track.trackID,
             codecFourCC: fourCC,
             codecName: codecName,
@@ -361,6 +390,9 @@ nonisolated enum MediaAnalyzer {
             trackDuration: trackDurationSec,
             posterFrame: poster
         )
+        videoTrack.dolbyVisionProfile = dolbyVisionProfile
+        videoTrack.pixelFormatDetailed = pixelFormatDetailed
+        return videoTrack
     }
 
     // MARK: Video helpers
