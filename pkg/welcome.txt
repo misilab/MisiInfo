@@ -2,7 +2,6 @@ Bienvenue dans le programme d'installation de MisiInfo.
 
 Welcome to the MisiInfo installer.
 
-────────────────────────────────────────────────────────────────
 
 MisiInfo est un analyseur technique de fichiers audio et vidéo natif
 macOS, conçu pour les professionnels de l'audiovisuel — monteurs,
@@ -13,10 +12,12 @@ MisiInfo is a native macOS analyzer of audio and video files,
 designed for audiovisual professionals — editors, cinematographers,
 colorists, sound engineers, DITs, teachers and students.
 
-CE QUE L'INSTALLATEUR FAIT / WHAT THE INSTALLER DOES :
 
-  • Copie MisiInfo.app dans /Applications
-  • Installe le binaire CLI « misiinfo » dans /usr/local/bin
-  • L'application est signée Developer ID Apple et notarisée
+CE QUE L'INSTALLATEUR FAIT — WHAT THE INSTALLER DOES
+
+  •  Copie MisiInfo.app dans /Applications
+  •  Installe le binaire CLI « misiinfo » dans /usr/local/bin
+  •  L'application est signée Developer ID Apple et notarisée
+
 
 Auteur : Matthieu Misiraca · misilab · www.misiraca.com

@@ -1,83 +1,81 @@
 CONTRAT DE LICENCE UTILISATEUR FINAL — MISIINFO
 END-USER LICENSE AGREEMENT — MISIINFO
 
-────────────────────────────────────────────────────────────────────
-
 Version 1.4 — 2026
 
-MisiInfo est un logiciel développé par Matthieu Misiraca (société
-misilab). En installant ou en utilisant MisiInfo, vous reconnaissez
-avoir lu, compris et accepté les termes du présent contrat.
+
+MisiInfo est un logiciel développé par Matthieu Misiraca (société misilab).
+En installant ou en utilisant MisiInfo, vous reconnaissez avoir lu, compris
+et accepté les termes du présent contrat.
 
 MisiInfo is software developed by Matthieu Misiraca (misilab company).
 By installing or using MisiInfo, you acknowledge that you have read,
 understood and agreed to the terms of this agreement.
 
-────────────────────────────────────────────────────────────────────
-1. DROITS D'UTILISATION / LICENSE GRANT
-────────────────────────────────────────────────────────────────────
 
-FR — Matthieu Misiraca / misilab vous concède un droit d'usage
-personnel et professionnel de MisiInfo sur les ordinateurs Mac que
-vous possédez ou contrôlez. Vous pouvez l'utiliser dans un cadre
-commercial (post-production, broadcast, étalonnage, ingénierie du
-son, formation) sans redevance supplémentaire.
+1. DROITS D'UTILISATION — LICENSE GRANT
 
-EN — Matthieu Misiraca / misilab grants you a personal and
-professional right to use MisiInfo on Mac computers that you own or
-control. You may use it in a commercial context (post-production,
-broadcast, color grading, audio engineering, training) at no
-additional fee.
 
-────────────────────────────────────────────────────────────────────
+FR — Matthieu Misiraca / misilab vous concède un droit d'usage personnel
+et professionnel de MisiInfo sur les ordinateurs Mac que vous possédez
+ou contrôlez. Vous pouvez l'utiliser dans un cadre commercial
+(post-production, broadcast, étalonnage, ingénierie du son, formation)
+sans redevance supplémentaire.
+
+EN — Matthieu Misiraca / misilab grants you a personal and professional
+right to use MisiInfo on Mac computers that you own or control. You may
+use it in a commercial context (post-production, broadcast, color
+grading, audio engineering, training) at no additional fee.
+
+
 2. RESTRICTIONS
-────────────────────────────────────────────────────────────────────
+
 
 Vous vous engagez à NE PAS / You agree NOT to :
 
-  • décompiler, désassembler ou faire de l'ingénierie inverse du
-    binaire (sauf disposition légale impérative contraire) ;
-    decompile, disassemble or reverse-engineer the binary (except as
-    permitted by applicable law) ;
+  •  décompiler, désassembler ou faire de l'ingénierie inverse du
+     binaire (sauf disposition légale impérative contraire) ;
+     decompile, disassemble or reverse-engineer the binary (except as
+     permitted by applicable law) ;
 
-  • redistribuer, vendre, louer ou prêter MisiInfo sans autorisation
-    écrite préalable de Matthieu Misiraca ;
-    redistribute, sell, rent or lend MisiInfo without prior written
-    authorization from Matthieu Misiraca ;
+  •  redistribuer, vendre, louer ou prêter MisiInfo sans autorisation
+     écrite préalable de Matthieu Misiraca ;
+     redistribute, sell, rent or lend MisiInfo without prior written
+     authorization from Matthieu Misiraca ;
 
-  • supprimer ou altérer les mentions de copyright et de licence
-    présentes dans le logiciel ou la documentation ;
-    remove or alter copyright and license notices included in the
-    software or documentation ;
+  •  supprimer ou altérer les mentions de copyright et de licence
+     présentes dans le logiciel ou la documentation ;
+     remove or alter copyright and license notices included in the
+     software or documentation ;
 
-  • utiliser le nom « MisiInfo », le logo ou la marque « misilab »
-    pour endosser ou promouvoir des produits dérivés sans accord
-    écrit préalable.
-    use the « MisiInfo » name, the logo or the « misilab » trademark
-    to endorse or promote derivative works without prior written
-    agreement.
+  •  utiliser le nom « MisiInfo », le logo ou la marque « misilab »
+     pour endosser ou promouvoir des produits dérivés sans accord
+     écrit préalable.
+     use the « MisiInfo » name, the logo or the « misilab » trademark
+     to endorse or promote derivative works without prior written
+     agreement.
 
-────────────────────────────────────────────────────────────────────
-3. ABSENCE DE GARANTIE / NO WARRANTY
-────────────────────────────────────────────────────────────────────
 
-FR — Le logiciel est fourni « TEL QUEL », sans garantie d'aucune
-sorte, expresse ou implicite, y compris mais sans s'y limiter les
-garanties de qualité marchande, d'adéquation à un usage particulier
-et de non-contrefaçon. En aucun cas l'auteur ne saurait être tenu
-responsable de dommages directs, indirects, accessoires, spéciaux,
-exemplaires ou consécutifs résultant de l'utilisation du logiciel.
+3. ABSENCE DE GARANTIE — NO WARRANTY
 
-EN — The software is provided « AS IS », without warranty of any
-kind, express or implied, including but not limited to the warranties
-of merchantability, fitness for a particular purpose and
-non-infringement. In no event shall the author be liable for any
-direct, indirect, incidental, special, exemplary or consequential
-damages arising out of the use of the software.
 
-────────────────────────────────────────────────────────────────────
+FR — Le logiciel est fourni « TEL QUEL », sans garantie d'aucune sorte,
+expresse ou implicite, y compris mais sans s'y limiter les garanties de
+qualité marchande, d'adéquation à un usage particulier et de
+non-contrefaçon. En aucun cas l'auteur ne saurait être tenu responsable
+de dommages directs, indirects, accessoires, spéciaux, exemplaires ou
+consécutifs résultant de l'utilisation du logiciel.
+
+EN — The software is provided « AS IS », without warranty of any kind,
+express or implied, including but not limited to the warranties of
+merchantability, fitness for a particular purpose and non-infringement.
+In no event shall the author be liable for any direct, indirect,
+incidental, special, exemplary or consequential damages arising out of
+the use of the software.
+
+
 4. COMPOSANTS TIERS — THIRD-PARTY COMPONENTS
-────────────────────────────────────────────────────────────────────
+
 
 MisiInfo intègre les bibliothèques open source suivantes, dont les
 copyrights et licences respectifs sont reproduits ci-dessous comme
@@ -87,23 +85,23 @@ MisiInfo embeds the following open source libraries, whose copyright
 notices and licenses are reproduced below as required by their
 respective authors.
 
-───────────────────────────────────────────────────────────────────────
-4.1 MEDIAINFOLIB (BSD-2-Clause)
-───────────────────────────────────────────────────────────────────────
+
+4.1  MEDIAINFOLIB  (BSD-2-Clause)
+
 
 Copyright (c) MediaArea.net SARL. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
+modification, are permitted provided that the following conditions are
+met:
 
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
 
-  2. Redistributions in binary form must reproduce the above
-     copyright notice, this list of conditions and the following
-     disclaimer in the documentation and/or other materials provided
-     with the distribution.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 « AS IS » AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -119,9 +117,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Site officiel : https://mediaarea.net/MediaInfo
 
-───────────────────────────────────────────────────────────────────────
-4.2 SPARKLE (MIT License)
-───────────────────────────────────────────────────────────────────────
+
+4.2  SPARKLE  (MIT License)
+
 
 Copyright (c) 2006-2013 Andy Matuschak.
 Copyright (c) 2009-2025 Sparkle Project contributors.
@@ -139,18 +137,17 @@ included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED « AS IS », WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
-BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Site officiel : https://sparkle-project.org
 
-───────────────────────────────────────────────────────────────────────
-4.3 LIBZEN (zlib License) — utilisée par MediaInfoLib
-───────────────────────────────────────────────────────────────────────
+
+4.3  LIBZEN  (zlib License) — utilisée par MediaInfoLib
+
 
 Copyright (c) ZenLib authors.
 
@@ -158,9 +155,9 @@ This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
 arising from the use of this software.
 
-────────────────────────────────────────────────────────────────────
+
 5. RÈGLEMENT GÉNÉRAL SUR LA PROTECTION DES DONNÉES (RGPD / GDPR)
-────────────────────────────────────────────────────────────────────
+
 
 FR — MisiInfo n'envoie aucune donnée d'analyse, télémétrie ou
 identifiant utilisateur. La seule connexion sortante du logiciel est
@@ -173,16 +170,15 @@ only outgoing connection is the update check via the GitHub API
 (api.github.com). No personal information, no content of analyzed
 files leaves your computer.
 
-────────────────────────────────────────────────────────────────────
+
 6. CONTACT
-────────────────────────────────────────────────────────────────────
+
 
 Matthieu Misiraca / misilab
 https://www.misiraca.com
 contact@misiraca.com
 Repository : https://github.com/misilab/MisiInfo
 
-────────────────────────────────────────────────────────────────────
 
 Copyright © 2026 Matthieu Misiraca. Tous droits réservés.
 Copyright © 2026 Matthieu Misiraca. All rights reserved.
