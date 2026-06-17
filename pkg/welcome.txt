@@ -2,7 +2,7 @@ Bienvenue dans le programme d'installation de MisiInfo.
 
 Welcome to the MisiInfo installer.
 
-═══════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────
 
 MisiInfo est un analyseur technique de fichiers audio et vidéo natif
 macOS, conçu pour les professionnels de l'audiovisuel — monteurs,

@@ -1,7 +1,7 @@
 CONTRAT DE LICENCE UTILISATEUR FINAL — MISIINFO
 END-USER LICENSE AGREEMENT — MISIINFO
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 Version 1.4 — 2026
 
@@ -13,9 +13,9 @@ MisiInfo is software developed by Matthieu Misiraca (misilab company).
 By installing or using MisiInfo, you acknowledge that you have read,
 understood and agreed to the terms of this agreement.
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 1. DROITS D'UTILISATION / LICENSE GRANT
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 FR — Matthieu Misiraca / misilab vous concède un droit d'usage
 personnel et professionnel de MisiInfo sur les ordinateurs Mac que
@@ -29,9 +29,9 @@ control. You may use it in a commercial context (post-production,
 broadcast, color grading, audio engineering, training) at no
 additional fee.
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 2. RESTRICTIONS
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 Vous vous engagez à NE PAS / You agree NOT to :
 
@@ -57,9 +57,9 @@ Vous vous engagez à NE PAS / You agree NOT to :
     to endorse or promote derivative works without prior written
     agreement.
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 3. ABSENCE DE GARANTIE / NO WARRANTY
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 FR — Le logiciel est fourni « TEL QUEL », sans garantie d'aucune
 sorte, expresse ou implicite, y compris mais sans s'y limiter les
@@ -75,9 +75,9 @@ non-infringement. In no event shall the author be liable for any
 direct, indirect, incidental, special, exemplary or consequential
 damages arising out of the use of the software.
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 4. COMPOSANTS TIERS — THIRD-PARTY COMPONENTS
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 MisiInfo intègre les bibliothèques open source suivantes, dont les
 copyrights et licences respectifs sont reproduits ci-dessous comme
@@ -158,9 +158,9 @@ This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
 arising from the use of this software.
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 5. RÈGLEMENT GÉNÉRAL SUR LA PROTECTION DES DONNÉES (RGPD / GDPR)
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 FR — MisiInfo n'envoie aucune donnée d'analyse, télémétrie ou
 identifiant utilisateur. La seule connexion sortante du logiciel est
@@ -173,16 +173,16 @@ only outgoing connection is the update check via the GitHub API
 (api.github.com). No personal information, no content of analyzed
 files leaves your computer.
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 6. CONTACT
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 Matthieu Misiraca / misilab
 https://www.misiraca.com
 contact@misiraca.com
 Repository : https://github.com/misilab/MisiInfo
 
-═══════════════════════════════════════════════════════════════════════
+────────────────────────────────────────────────────────────────────
 
 Copyright © 2026 Matthieu Misiraca. Tous droits réservés.
 Copyright © 2026 Matthieu Misiraca. All rights reserved.
