@@ -7,6 +7,89 @@
         <language>fr</language>
         <link>https://github.com/misilab/MisiInfo</link>
         <item>
+            <title>MisiInfo 1.4.0</title>
+            <link>https://github.com/misilab/MisiInfo/releases/tag/v1.4.0</link>
+            <sparkle:version>1.4.0</sparkle:version>
+            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <pubDate>Wed, 17 Jun 2026 15:42:35 +0000</pubDate>
+            <description><![CDATA[
+# MisiInfo 1.4.0 — Conformity Presets, Comparison Mode, CLI 🎬✨
+
+Cette version transforme MisiInfo en véritable outil de **Quality Control (QC)** pour les workflows pros.
+
+## 🔥 Préréglages de conformité
+
+Sept normes pros embarquées avec validation automatique :
+
+- **Netflix 4K HDR10** — codec, résolution, primaries, transfer, MDCV, MaxCLL/MaxFALL…
+- **Netflix 4K SDR** — master ProRes 422 HQ, balayage progressif, 10 bits…
+- **Broadcast EBU R128 (HD TV)** — −23 LUFS ±1, True Peak ≤ −1 dBTP, 1080p25/50p, BT.709…
+- **DCP Cinéma (DCI)** — JPEG 2000, 24/48 fps, 12 bits, 48/96 kHz, surround 5.1+…
+- **YouTube 4K** — recommandations upload + loudness target
+- **ProRes 422 HQ Delivery** — master pro édité
+- **Web HTML5** — compatibilité large navigateur
+
+Chaque règle est validée avec un statut **vert/orange/rouge**, un **score global sur 100** et une explication pédagogique pour chaque non-conformité. Le préréglage choisi est persisté.
+
+## 🔥 Mode comparaison
+
+Importez 2 fichiers ou plus → menu **Comparer** dans la toolbar → vue **côte à côte** avec les différences surlignées en orange (icône ⚠). Six catégories comparées : Général, Vidéo, Colorimétrie, Audio, Loudness, Timecode/Capture. Comparaison case-insensitive + normalisation espaces pour éliminer les faux positifs.
+
+**Workflow type** : vérifier qu'un export correspond bien au master avant livraison.
+
+## 🔥 CLI standalone
+
+Binaire en ligne de commande pour les pipelines DIT et la post-production automatisée :
+
+```bash
+misiinfo video.mp4                            # sortie texte
+misiinfo --json clip.mov > report.json        # JSON structuré
+misiinfo --check broadcast.ebu.r128 file.wav  # validation conformité
+misiinfo --json --check netflix.4k.hdr10 master.mxf
+```
+
+**Codes de retour** : 0 OK, 1 erreur d'analyse, 2 non-conformité critique, 64 mauvais arguments. Batch supporté (un seul exit code agrégé en fin de run).
+
+Installation : `sudo cp scripts/misiinfo /usr/local/bin/`
+
+## 📊 Métadonnées étendues
+
+En bonus dans cette version :
+- **GPS** (iPhone, drones) parsé en ISO 6709 + lien "Ouvrir dans Plans"
+- **EXIF caméra** : marque, modèle, software, objectif, date d'enregistrement précise
+- **Chapitres** (QuickTime chapter tracks)
+- **Tags Finder + commentaire Spotlight + source de téléchargement** (xattr)
+- **Pixel format détaillé** style FFmpeg (yuv420p10le, p010…)
+- **Profil Dolby Vision détaillé** parsé depuis l'atom dvcC
+
+## 🐛 Corrections
+
+- Score de conformité ne donne plus 100 % pour un fichier audio contre un preset HDR10
+- `progressiveScan` retourne `.fail` (critique) au lieu de `.warning` pour Netflix
+- CLI : batch corrigé (plus d'exit prématuré entre fichiers)
+- Comparaison de fichiers : case-insensitive + trim
+- 60+ nouvelles traductions FR/EN/ES
+
+## 📦 Téléchargements
+
+- **MisiInfo.dmg** — application signée Developer ID + notarisée Apple
+- **MisiInfo-Manual.pdf** — manuel trilingue 14 pages mis à jour
+- **misiinfo** — binaire CLI standalone (à copier dans /usr/local/bin)
+
+---
+
+Pré-requis : macOS 14 Sonoma ou supérieur. Mise à jour automatique via Sparkle pour les utilisateurs sur 1.3.1+.
+
+Créé par [Matthieu Misiraca](https://www.misiraca.com).
+            ]]></description>
+            <enclosure
+                url="https://github.com/misilab/MisiInfo/releases/download/v1.4.0/MisiInfo.dmg"
+                sparkle:edSignature="U5VTK7grTEHIGbxbpYOtHLw+K/nkSQOgUjdJvp7vLgiZkAus2UKs1RwFbiT5EU88HtbXYlg/kHxD5clWnjYNAQ=="
+                length="10851519"
+                type="application/octet-stream" />
+        </item>
+        <item>
             <title>MisiInfo 1.3.1</title>
             <link>https://github.com/misilab/MisiInfo/releases/tag/v1.3.1</link>
             <sparkle:version>1.3.1</sparkle:version>
