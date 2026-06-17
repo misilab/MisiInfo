@@ -134,7 +134,10 @@ struct AnalysisReportView: View {
                 TracksSection(analysis: analysis)
                 MetadataSection(items: analysis.metadata, mode: mode)
 
-                if mode == .expert {
+                let hasSystemUserData = !analysis.finderTags.isEmpty
+                    || analysis.spotlightComment != nil
+                    || analysis.downloadSource != nil
+                if hasSystemUserData || (mode == .expert && !analysis.mediaCharacteristics.isEmpty) {
                     SystemMetadataSection(analysis: analysis, mode: mode)
                 }
 

@@ -498,8 +498,12 @@ struct ChaptersSection: View {
     var body: some View {
         SectionCard(title: "Chapitres", systemImage: "list.number", tint: .mediaTracks) {
             ForEach(Array(chapters.enumerated()), id: \.element.id) { idx, chap in
+                // Utilise le format string LocalizedStringKey natif (Swift interpole en %lld) au
+                // lieu d'un LocalizedStringKey(String) qui crée une clé runtime "Chapitre 1"
+                // jamais matchée dans le catalogue.
+                let n = idx + 1
                 InfoRow(
-                    label: LocalizedStringKey("Chapitre \(idx + 1)"),
+                    label: "Chapitre \(n)",
                     value: chap.title.isEmpty
                         ? chap.startFormatted
                         : "\(chap.startFormatted) — \(chap.title)",

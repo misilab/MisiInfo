@@ -26,20 +26,25 @@ nonisolated enum ExtendedMetadataExtractor {
         return nil
     }
 
-    /// Parse ISO 6709 : +37.4220-122.0840+0.0/
+    /// Parse ISO 6709 : `+37.4220-122.0840+0.0/` ou `+37.4220-122.0840+0.0CRSWGS_84/`.
+    /// Pattern : signe + latitude, signe + longitude, [signe + altitude], [suffixe CRS], '/'.
     static func parseISO6709(_ s: String) -> GPSLocation? {
         var str = s
         if str.hasSuffix("/") { str.removeLast() }
-        let pattern = #"([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)(?:([+-]\d+(?:\.\d+)?))?"#
+        // Coupe le suffixe CRS éventuel (ex : "CRSWGS_84")
+        if let crsRange = str.range(of: "CRS", options: [.caseInsensitive]) {
+            str = String(str[..<crsRange.lowerBound])
+        }
+        let pattern = #"([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)([+-]\d+(?:\.\d+)?)?"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
         let range = NSRange(str.startIndex..., in: str)
-        guard let m = regex.firstMatch(in: str, range: range), m.numberOfRanges >= 3 else { return nil }
+        guard let m = regex.firstMatch(in: str, range: range) else { return nil }
         guard let latR = Range(m.range(at: 1), in: str),
               let lonR = Range(m.range(at: 2), in: str),
               let lat = Double(str[latR]),
               let lon = Double(str[lonR]) else { return nil }
         var alt: Double? = nil
-        if m.numberOfRanges >= 4, let altR = Range(m.range(at: 3), in: str) {
+        if let altR = Range(m.range(at: 3), in: str) {
             alt = Double(str[altR])
         }
         return GPSLocation(latitude: lat, longitude: lon, altitude: alt)
@@ -66,21 +71,27 @@ nonisolated enum ExtendedMetadataExtractor {
             let id = (item.identifier?.rawValue ?? "").lowercased()
             let key = ((item.key as? String) ?? "").lowercased()
             let any = id + "|" + key
-            if make == nil, any.contains("quicktime.make") || (any.contains("make") && !any.contains("brand")) {
+            if make == nil, any.hasSuffix(".make") || any.contains("|make") || id == "com.apple.quicktime.make" {
                 make = await sval(item)
             }
-            if model == nil, any.contains("quicktime.model") || any.contains(".model") {
+            if model == nil, any.hasSuffix(".model") || any.contains("|model") || id == "com.apple.quicktime.model" {
                 model = await sval(item)
             }
-            if software == nil, any.contains("quicktime.software") || any.contains(".software") {
+            if software == nil, any.hasSuffix(".software") || any.contains("|software") || id == "com.apple.quicktime.software" {
                 software = await sval(item)
             }
             if recordingDate == nil, any.contains("creationdate") || any.contains("creation_time") {
                 if let d = await dval(item) {
                     recordingDate = d
-                } else if let s = await sval(item),
-                          let d = ISO8601DateFormatter().date(from: s) {
-                    recordingDate = d
+                } else if let s = await sval(item) {
+                    let f = ISO8601DateFormatter()
+                    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds, .withTimeZone]
+                    if let d = f.date(from: s) {
+                        recordingDate = d
+                    } else {
+                        f.formatOptions = [.withInternetDateTime]
+                        if let d = f.date(from: s) { recordingDate = d }
+                    }
                 }
             }
             if lensModel == nil, any.contains("lens") {
@@ -147,19 +158,26 @@ nonisolated enum ExtendedMetadataExtractor {
         return (str?.isEmpty == false) ? str : nil
     }
 
-    /// Lit l'extended attribute com.apple.metadata:kMDItemWhereFroms qui contient
+    /// Lit l'extended attribute `com.apple.metadata:kMDItemWhereFroms` qui contient
     /// l'URL/source de téléchargement (plist binaire avec liste de strings).
+    /// Retourne url ← referrer si disponibles.
     static func extractDownloadSource(url: URL) -> String? {
         let attr = "com.apple.metadata:kMDItemWhereFroms"
         let size = getxattr(url.path, attr, nil, 0, 0, 0)
         guard size > 0 else { return nil }
-        var data = Data(count: size)
+        // Alloue un peu plus pour absorber une race condition (l'attribut grandit entre les
+        // deux appels). On utilise ensuite la taille effectivement lue.
+        let buf = max(size, size + 64)
+        var data = Data(count: buf)
         let read = data.withUnsafeMutableBytes { ptr -> Int in
-            getxattr(url.path, attr, ptr.baseAddress, size, 0, 0)
+            getxattr(url.path, attr, ptr.baseAddress, buf, 0, 0)
         }
         guard read > 0 else { return nil }
+        data = data.prefix(read)
         guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) else { return nil }
-        if let arr = plist as? [String], let first = arr.first { return first }
+        if let arr = plist as? [String], !arr.isEmpty {
+            return arr.prefix(2).joined(separator: " ← ")
+        }
         return nil
     }
 
@@ -202,22 +220,27 @@ nonisolated enum ExtendedMetadataExtractor {
         }
     }
 
-    /// Profil Dolby Vision lu depuis l'atom `dvcC` (8 octets : version + level/profile).
+    /// Profil Dolby Vision lu depuis l'atom `dvcC` (configurationVersion / profile / level).
+    /// Référence : Dolby Vision Streams within the ISO Base Media File Format spec, §2.2.
     static func dolbyVisionProfile(extensionAtoms atoms: [String: Any]?) -> String? {
         guard let atoms else { return nil }
         let data = (atoms["dvcC"] as? Data) ?? (atoms["dvvC"] as? Data)
         guard let d = data, d.count >= 4 else { return nil }
         let bytes = [UInt8](d)
-        let profile = (bytes[2] >> 1) & 0x7F  // 7 bits
+        // bytes[0..1] : versions / NAL-type, bytes[2] : MSB7=profile (7 bits), bit0=level MSB
+        let profile = (bytes[2] >> 1) & 0x7F
         let level = ((bytes[2] & 0x01) << 5) | (bytes[3] >> 3)
+        let name: String
         switch profile {
-        case 5: return "Dolby Vision Profile 5 (IPTPQc2) @L\(level)"
-        case 7: return "Dolby Vision Profile 7 (BL+EL+RPU) @L\(level)"
-        case 8: return "Dolby Vision Profile 8.1 (HDR10 compatible) @L\(level)"
-        case 9: return "Dolby Vision Profile 8.4 (HLG compatible) @L\(level)"
-        case 10: return "Dolby Vision Profile 10 @L\(level)"
-        default: return "Dolby Vision Profile \(profile) @L\(level)"
+        case 4: name = "Dolby Vision Profile 4 (BL HDR + EL SDR)"
+        case 5: name = "Dolby Vision Profile 5 (IPT-PQ-c2, sans rétrocompat)"
+        case 7: name = "Dolby Vision Profile 7 (BL HDR10 + EL + RPU)"
+        case 8: name = "Dolby Vision Profile 8 (HDR10/HLG compatible, BL+RPU)"
+        case 9: name = "Dolby Vision Profile 9 (AVC HDR10 compatible)"
+        case 10: name = "Dolby Vision Profile 10 (AV1)"
+        default: name = "Dolby Vision Profile \(profile)"
         }
+        return "\(name) @L\(level)"
     }
 }
 
@@ -262,11 +285,12 @@ nonisolated struct ChapterMarker: Hashable, Sendable, Identifiable {
     let title: String
 
     var startFormatted: String {
+        guard startTime.isFinite, startTime >= 0 else { return "—" }
         let total = Int(startTime)
         let h = total / 3600
         let m = (total % 3600) / 60
         let s = total % 60
-        let ms = Int((startTime - Double(total)) * 1000)
+        let ms = max(0, Int((startTime - Double(total)) * 1000))
         return String(format: "%02d:%02d:%02d.%03d", h, m, s, ms)
     }
 }
