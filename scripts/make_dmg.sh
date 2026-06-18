@@ -134,10 +134,26 @@ if [[ "$NOTARIZE" == "true" ]]; then
 fi
 
 echo ""
-echo "🚀 Prêt : $DMG_OUT"
+echo "🚀 DMG prêt : $DMG_OUT"
+
+# Génère aussi un .zip du .app pour Sparkle (auto-install 1-clic).
+# Sparkle 2.x ne sait pas auto-installer un DMG : sans ZIP, l'utilisateur doit
+# monter manuellement et glisser-déposer. Le ZIP est extrait silencieusement.
+ZIP_OUT="$HOME/Desktop/MisiInfo-${VERSION_OVERRIDE:-1.0.0}.zip"
+echo ""
+echo "🗜  Génération ZIP Sparkle…"
+ZIP_TMP=$(mktemp -d)
+# Re-mount le DMG notarisé pour récupérer l'app post-notarisation (avec staple).
+hdiutil attach "$DMG_OUT" -nobrowse -quiet -mountpoint "$ZIP_TMP/mount"
+ditto -c -k --sequesterRsrc --keepParent "$ZIP_TMP/mount/MisiInfo.app" "$ZIP_OUT"
+hdiutil detach "$ZIP_TMP/mount" -quiet
+rm -rf "$ZIP_TMP"
+ZIP_SIZE=$(du -h "$ZIP_OUT" | cut -f1)
+echo "✅ ZIP prêt : $ZIP_OUT  ($ZIP_SIZE)"
+
 echo ""
 echo "Étapes suivantes pour publier :"
-echo "  1. ~/bin/gh release create v${VERSION_OVERRIDE:-X.Y.Z} \"$DMG_OUT\" docs/MisiInfo-Manual.pdf \\"
+echo "  1. /tmp/gh release create v${VERSION_OVERRIDE:-X.Y.Z} \"$DMG_OUT\" \"$ZIP_OUT\" docs/MisiInfo-Manual.pdf \\"
 echo "         --repo misilab/MisiInfo --title \"MisiInfo ${VERSION_OVERRIDE:-X.Y.Z}\" --notes \"...\""
-echo "  2. ./scripts/generate_appcast.sh   # signe les DMG + génère docs/appcast.xml"
+echo "  2. ./scripts/generate_appcast.sh   # signe les ZIP/DMG + génère docs/appcast.xml"
 echo "  3. git add docs/appcast.xml && git commit -m \"Appcast v${VERSION_OVERRIDE:-X.Y.Z}\" && git push"
