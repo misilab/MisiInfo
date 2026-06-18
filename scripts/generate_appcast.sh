@@ -70,15 +70,23 @@ with open(appcast_path, "w", encoding="utf-8") as f:
         notes = (r["body"] or "").strip()
         notes_escaped = notes.replace("]]>", "]]]]><![CDATA[>")
 
+        # Préférer le ZIP (Sparkle auto-install) sur le DMG (manual install).
+        # Sparkle 2.x ne sait PAS auto-installer un DMG : il le télécharge et
+        # demande à l'utilisateur de le monter et glisser-déposer le .app.
+        # Avec un .zip d'app, Sparkle extrait + quitte + remplace + relance
+        # automatiquement en 5 secondes.
+        zip_asset = next((a for a in r["assets"] if a["name"].lower().endswith(".zip")), None)
         dmg = next((a for a in r["assets"] if a["name"].lower().endswith(".dmg")), None)
-        if not dmg:
-            print(f"⚠️  {tag} sans DMG")
+        asset = zip_asset or dmg
+        if not asset:
+            print(f"⚠️  {tag} sans ZIP ni DMG")
             continue
+        ext = ".zip" if asset["name"].lower().endswith(".zip") else ".dmg"
 
-        with tempfile.NamedTemporaryFile(suffix=".dmg", delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
             tmp_path = tmp.name
-        print(f"⬇️  {tag} : téléchargement {dmg['name']} ({dmg['size']} octets)…")
-        urllib.request.urlretrieve(dmg["browser_download_url"], tmp_path)
+        print(f"⬇️  {tag} : téléchargement {asset['name']} ({asset['size']} octets)…")
+        urllib.request.urlretrieve(asset["browser_download_url"], tmp_path)
         print(f"🔏 Signature Ed25519…")
         result = subprocess.run([sign_update, tmp_path], capture_output=True, text=True, check=False)
         os.unlink(tmp_path)
@@ -104,7 +112,7 @@ with open(appcast_path, "w", encoding="utf-8") as f:
 {notes_escaped}
             ]]></description>
             <enclosure
-                url="{dmg['browser_download_url']}"
+                url="{asset['browser_download_url']}"
                 sparkle:edSignature="{signature}"
                 length="{length}"
                 type="application/octet-stream" />
