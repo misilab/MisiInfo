@@ -84,9 +84,9 @@ Pré-requis : macOS 14 Sonoma ou supérieur. Mise à jour automatique via Sparkl
 Créé par [Matthieu Misiraca](https://www.misiraca.com).
             ]]></description>
             <enclosure
-                url="https://github.com/misilab/MisiInfo/releases/download/v1.4.0/MisiInfo.dmg"
-                sparkle:edSignature="U5VTK7grTEHIGbxbpYOtHLw+K/nkSQOgUjdJvp7vLgiZkAus2UKs1RwFbiT5EU88HtbXYlg/kHxD5clWnjYNAQ=="
-                length="10851519"
+                url="https://github.com/misilab/MisiInfo/releases/download/v1.4.0/MisiInfo-1.4.0.zip"
+                sparkle:edSignature="266/l4E0SpxxdbwB7ub48ktfrcJIXmvOeuQ4MZfhSqDxPmkAJZKYFstdfGZb0toCJ04q0Gg0rIGKvMSHnZY3Ag=="
+                length="10790137"
                 type="application/octet-stream" />
         </item>
         <item>
